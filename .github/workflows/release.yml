@@ -142,11 +142,11 @@ jobs:
           security list-keychains -d user -s "$keychain" login.keychain-db
           security set-key-partition-list -S apple-tool:,apple: -s -k actions "$keychain"
       - name: Sign application and seal runtime manifest
-        run: scripts/release/sign-macos.sh build/bin/NFCX.app "$VERSION" "$COMMIT" "${MACOS_SIGNING_IDENTITY:--}"
+        run: scripts/release/sign-macos.sh build/bin/NCC.app "$VERSION" "$COMMIT" "${MACOS_SIGNING_IDENTITY:--}"
       - name: Verify packaged self-check
-        run: build/bin/NFCX.app/Contents/MacOS/NFCX --self-check --json
+        run: build/bin/NCC.app/Contents/MacOS/NCC --self-check --json
       - name: Reject developer paths
-        run: go run ./cmd/nfcx-release scan-paths -root build/bin/NFCX.app -needle "$GITHUB_WORKSPACE"
+        run: go run ./cmd/nfcx-release scan-paths -root build/bin/NCC.app -needle "$GITHUB_WORKSPACE"
       - name: Create DMG
         env:
           NFCX_CODESIGN_IDENTITY: ${{ env.MACOS_SIGNING_IDENTITY }}
@@ -154,13 +154,13 @@ jobs:
         run: scripts/release/package-unix.sh "$VERSION"
       - name: Configure notarization
         if: env.MACOS_SIGNING_IDENTITY != ''
-        run: xcrun notarytool store-credentials NFCX-notary --apple-id "$APPLE_ID" --password "$APPLE_APP_PASSWORD" --team-id "$APPLE_TEAM_ID"
+        run: xcrun notarytool store-credentials NCC-notary --apple-id "$APPLE_ID" --password "$APPLE_APP_PASSWORD" --team-id "$APPLE_TEAM_ID"
       - name: Notarize and staple DMG
         if: env.MACOS_SIGNING_IDENTITY != ''
-        run: scripts/release/notarize-macos.sh "$VERSION" NFCX-notary
+        run: scripts/release/notarize-macos.sh "$VERSION" NCC-notary
       - uses: actions/upload-artifact@v4
         with:
-          name: NFCX-${{ env.VERSION }}-darwin-arm64
+          name: NCC-${{ env.VERSION }}-darwin-arm64
           path: dist/*.dmg
           if-no-files-found: error
 
@@ -222,24 +222,24 @@ jobs:
         run: make build VERSION="$VERSION" COMMIT="$COMMIT" BUILD_DATE="$BUILD_DATE" DIRTY=false
       - name: Verify WebKitGTK ABI
         run: |
-          readelf -d build/bin/NFCX-linux-amd64/NFCX | grep -F 'Shared library: [libwebkit2gtk-4.1.so.0]'
-          if readelf -d build/bin/NFCX-linux-amd64/NFCX | grep -Fq 'libwebkit2gtk-4.0.so'; then
+          readelf -d build/bin/NCC-linux-amd64/NCC | grep -F 'Shared library: [libwebkit2gtk-4.1.so.0]'
+          if readelf -d build/bin/NCC-linux-amd64/NCC | grep -Fq 'libwebkit2gtk-4.0.so'; then
             echo 'Linux application unexpectedly links legacy WebKitGTK 4.0' >&2
             exit 1
           fi
       - name: Seal runtime manifest
         run: scripts/release/generate-manifest.sh "$VERSION" "$COMMIT"
       - name: Verify packaged self-check
-        run: build/bin/NFCX-linux-amd64/NFCX --self-check --json
+        run: build/bin/NCC-linux-amd64/NCC --self-check --json
       - name: Reject developer paths
-        run: go run ./cmd/nfcx-release scan-paths -root build/bin/NFCX-linux-amd64 -needle "$GITHUB_WORKSPACE"
+        run: go run ./cmd/nfcx-release scan-paths -root build/bin/NCC-linux-amd64 -needle "$GITHUB_WORKSPACE"
       - name: Create AppImage and tar.gz
         run: scripts/release/package-unix.sh "$VERSION"
       - name: Smoke test AppImage extraction
-        run: APPIMAGE_EXTRACT_AND_RUN=1 "dist/NFCX-$VERSION-linux-amd64.AppImage" --self-check --json
+        run: APPIMAGE_EXTRACT_AND_RUN=1 "dist/NCC-$VERSION-linux-amd64.AppImage" --self-check --json
       - uses: actions/upload-artifact@v4
         with:
-          name: NFCX-${{ env.VERSION }}-linux-amd64
+          name: NCC-${{ env.VERSION }}-linux-amd64
           path: |
             dist/*.AppImage
             dist/*.tar.gz
@@ -326,7 +326,7 @@ jobs:
           [IO.File]::WriteAllBytes($certificate, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
           $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Filter signtool.exe -Recurse | Where-Object FullName -Match 'x64' | Sort-Object FullName -Descending | Select-Object -First 1
           if (-not $signtool) { throw "signtool.exe was not found" }
-          Get-ChildItem build/bin/NFCX-windows-amd64 -File | Where-Object Extension -In '.exe','.dll' | ForEach-Object {
+          Get-ChildItem build/bin/NCC-windows-amd64 -File | Where-Object Extension -In '.exe','.dll' | ForEach-Object {
             & $signtool.FullName sign /f $certificate /p $env:WINDOWS_CERTIFICATE_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $_.FullName
             & $signtool.FullName verify /pa /v $_.FullName
           }
@@ -335,10 +335,10 @@ jobs:
         run: scripts/release/generate-manifest.sh "$VERSION" "$COMMIT"
       - name: Verify packaged self-check
         shell: pwsh
-        run: '& ".\build\bin\NFCX-windows-amd64\NFCX.exe" --self-check --json'
+        run: '& ".\build\bin\NCC-windows-amd64\NCC.exe" --self-check --json'
       - name: Reject developer paths
         shell: pwsh
-        run: go run ./cmd/nfcx-release scan-paths -root build/bin/NFCX-windows-amd64 -needle $env:GITHUB_WORKSPACE
+        run: go run ./cmd/nfcx-release scan-paths -root build/bin/NCC-windows-amd64 -needle $env:GITHUB_WORKSPACE
       - name: Create portable ZIP
         shell: pwsh
         run: |
@@ -349,7 +349,7 @@ jobs:
           }
       - uses: actions/upload-artifact@v4
         with:
-          name: NFCX-${{ env.VERSION }}-windows-amd64
+          name: NCC-${{ env.VERSION }}-windows-amd64
           path: dist/*.zip
           if-no-files-found: error
 
@@ -366,7 +366,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - uses: actions/download-artifact@v4
         with:
-          pattern: NFCX-${{ needs.metadata.outputs.version }}-*
+          pattern: NCC-${{ needs.metadata.outputs.version }}-*
           path: dist
           merge-multiple: true
       - name: Generate release checksums
@@ -376,6 +376,6 @@ jobs:
         shell: bash
         run: |
           if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "NFCX ${{ needs.metadata.outputs.version }}"
+            gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "NCC ${{ needs.metadata.outputs.version }}"
           fi
           gh release upload "$GITHUB_REF_NAME" dist/* --clobber

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=NCC
+Comment=Cross-platform NCC desktop workbench
+Exec=NCC
+Icon=NCC
+Terminal=false
+Categories=Utility;

@@ -5,7 +5,7 @@ export type Language = "en" | "zh-CN";
 type TranslationValues = Record<string, string | number>;
 type Dictionary = Record<string, string>;
 
-const storageKey = "nfcx-language";
+const storageKey = "ncc-language";
 const dictionaries: Record<Language, Dictionary> = { en: english, "zh-CN": simplifiedChinese };
 let currentLanguage: Language = detectLanguage();
 

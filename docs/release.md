@@ -1,20 +1,20 @@
-# NFCX 跨平台发布
+# NCC 跨平台发布
 
 首批发布目标为 macOS arm64、Windows amd64 和 Linux amd64。构建及发布只通过
 GitHub Actions 的原生 runner 执行，不从 Linux 交叉编译其他平台。
 
 ## 产物
 
-- `NFCX-<version>-darwin-arm64.dmg`：配置 Apple 发布凭据时使用 Developer ID 签名、
-  公证并 staple；未配置时生成 `NFCX-<version>-darwin-arm64-unsigned.dmg`，使用 ad-hoc
+- `NCC-<version>-darwin-arm64.dmg`：配置 Apple 发布凭据时使用 Developer ID 签名、
+  公证并 staple；未配置时生成 `NCC-<version>-darwin-arm64-unsigned.dmg`，使用 ad-hoc
   签名且不公证；
-- `NFCX-<version>-windows-amd64.zip`：有证书时签名；缺少证书的手工构建增加
+- `NCC-<version>-windows-amd64.zip`：有证书时签名；缺少证书的手工构建增加
   `-unsigned` 后缀；
-- `NFCX-<version>-linux-amd64.AppImage`；
-- `NFCX-<version>-linux-amd64.tar.gz`；
+- `NCC-<version>-linux-amd64.AppImage`；
+- `NCC-<version>-linux-amd64.tar.gz`；
 - `SHA256SUMS`。
 
-macOS DMG 打开后包含 `NFCX.app`、指向系统 `/Applications` 的 `Applications` 目录链接，
+macOS DMG 打开后包含 `NCC.app`、指向系统 `/Applications` 的 `Applications` 目录链接，
 以及简短安装提示；将应用拖到该目录即可安装。
 
 首版正式支持 PN532 UART，包括 PN532 + FT232RL。其他 libnfc 读卡器驱动在完成
@@ -60,19 +60,19 @@ runtime。三种布局都包含 `manifest.json`，列出组件来源、版本、
 及逐文件 SHA-256。
 
 发布构建还会聚合实际链接到应用的 Go module 许可证。GPL 工具的 source lock、
-源码 URL、源码 SHA-256 和 NFCX patch 一并包含在产物中，作为对应源码获取说明。
+源码 URL、源码 SHA-256 和 NCC patch 一并包含在产物中，作为对应源码获取说明。
 
 ## 无硬件自检
 
 最终解压目录可运行：
 
 ```text
-NFCX --self-check --json
+NCC --self-check --json
 ```
 
-该命令不会打开 GUI 或 NFC 设备。它检查：
+该命令不会打开 GUI 或 NCC 设备。它检查：
 
-- NFCX/commit/Go/Wails/OS/architecture 构建信息；
+- NCC/commit/Go/Wails/OS/architecture 构建信息；
 - 私有 libnfc 的加载、版本和启用驱动；
 - mfoc、mfcuk、mfoc-hardnested、nfc-mfsetuid 的版本/能力；
 - runtime manifest 和每个文件的 SHA-256。

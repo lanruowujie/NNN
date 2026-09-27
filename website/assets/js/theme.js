@@ -1,5 +1,5 @@
 (() => {
-  const key = 'nfcx-theme';
+  const key = 'ncc-theme';
   const root = document.documentElement;
   const button = document.querySelector('[data-theme-toggle]');
   const label = document.querySelector('[data-theme-label]');

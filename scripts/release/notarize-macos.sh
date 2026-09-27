@@ -4,10 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)"
-VERSION="${1:?NFCX version is required}"
+VERSION="${1:?NCC version is required}"
 PROFILE="${2:?notarytool keychain profile is required}"
-APP="$REPO_ROOT/build/bin/NFCX.app"
-DMG="$REPO_ROOT/dist/NFCX-$VERSION-darwin-arm64.dmg"
+APP="$REPO_ROOT/build/bin/NCC.app"
+DMG="$REPO_ROOT/dist/NCC-$VERSION-darwin-arm64.dmg"
 
 [[ -f "$DMG" ]] || { echo "DMG is missing: $DMG" >&2; exit 1; }
 xcrun notarytool submit "$DMG" --keychain-profile "$PROFILE" --wait

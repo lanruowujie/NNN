@@ -11,9 +11,9 @@ PLATFORM="$(nfcx_platform)"
 EXE_SUFFIX="$(nfcx_exe_suffix "$PLATFORM")"
 SOURCE="$REPO_ROOT/runtime/$PLATFORM"
 case "$PLATFORM" in
-  darwin-*) DEFAULT_APP="$REPO_ROOT/build/bin/NFCX.app" ;;
-  windows-*) DEFAULT_APP="$REPO_ROOT/build/bin/NFCX.exe" ;;
-  linux-*) DEFAULT_APP="$REPO_ROOT/build/bin/NFCX" ;;
+  darwin-*) DEFAULT_APP="$REPO_ROOT/build/bin/NCC.app" ;;
+  windows-*) DEFAULT_APP="$REPO_ROOT/build/bin/NCC.exe" ;;
+  linux-*) DEFAULT_APP="$REPO_ROOT/build/bin/NCC" ;;
 esac
 APP_PATH="${1:-$DEFAULT_APP}"
 
@@ -86,7 +86,7 @@ case "$PLATFORM" in
   darwin-arm64)
     [[ -d "$APP_PATH/Contents/MacOS" ]] || { echo "application bundle is missing: $APP_PATH" >&2; exit 1; }
     DESTINATION="$APP_PATH/Contents/Resources/runtime/$PLATFORM"
-    APP_EXECUTABLE="$APP_PATH/Contents/MacOS/NFCX"
+    APP_EXECUTABLE="$APP_PATH/Contents/MacOS/NCC"
     rm -rf "$DESTINATION"
     mkdir -p "$DESTINATION"
     for library in "$SOURCE"/libnfc.*.dylib; do
@@ -103,25 +103,25 @@ case "$PLATFORM" in
     ;;
   linux-amd64)
     [[ -x "$APP_PATH" ]] || { echo "application executable is missing: $APP_PATH" >&2; exit 1; }
-    APP_ROOT="$(dirname "$APP_PATH")/NFCX-linux-amd64"
+    APP_ROOT="$(dirname "$APP_PATH")/NCC-linux-amd64"
     DESTINATION="$APP_ROOT/runtime/$PLATFORM"
     rm -rf "$APP_ROOT"
     mkdir -p "$DESTINATION"
-    install -m 0755 "$APP_PATH" "$APP_ROOT/NFCX"
+    install -m 0755 "$APP_PATH" "$APP_ROOT/NCC"
     for library in "$SOURCE"/libnfc.so*; do
       [[ -e "$library" ]] && cp -P "$library" "$DESTINATION/"
     done
     for engine in mfoc mfcuk mfoc-hardnested nfc-mfsetuid; do install -m 0755 "$SOURCE/$engine" "$DESTINATION/$engine"; done
     copy_metadata "$DESTINATION"
-    patchelf --set-rpath '$ORIGIN/runtime/linux-amd64' "$APP_ROOT/NFCX"
+    patchelf --set-rpath '$ORIGIN/runtime/linux-amd64' "$APP_ROOT/NCC"
     ;;
   windows-amd64)
     [[ -f "$APP_PATH" ]] || { echo "application executable is missing: $APP_PATH" >&2; exit 1; }
-    APP_ROOT="$(dirname "$APP_PATH")/NFCX-windows-amd64"
+    APP_ROOT="$(dirname "$APP_PATH")/NCC-windows-amd64"
     DESTINATION="$APP_ROOT"
     rm -rf "$APP_ROOT"
     mkdir -p "$DESTINATION"
-    install -m 0755 "$APP_PATH" "$DESTINATION/NFCX.exe"
+    install -m 0755 "$APP_PATH" "$DESTINATION/NCC.exe"
     for library in "$(dirname "$APP_PATH")"/*.dll; do
       [[ -f "$library" ]] && install -m 0755 "$library" "$DESTINATION/$(basename "$library")"
     done

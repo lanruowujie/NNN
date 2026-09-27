@@ -8,12 +8,12 @@ REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)"
 source "$REPO_ROOT/scripts/toolchain/platform.sh"
 
 PLATFORM="$(nfcx_platform)"
-VERSION="${1:?NFCX version is required}"
+VERSION="${1:?NCC version is required}"
 COMMIT="${2:?Git commit is required}"
 case "$PLATFORM" in
-  darwin-arm64) ROOT="$REPO_ROOT/build/bin/NFCX.app/Contents/Resources/runtime/$PLATFORM" ;;
-  linux-amd64) ROOT="$REPO_ROOT/build/bin/NFCX-linux-amd64/runtime/$PLATFORM" ;;
-  windows-amd64) ROOT="$REPO_ROOT/build/bin/NFCX-windows-amd64" ;;
+  darwin-arm64) ROOT="$REPO_ROOT/build/bin/NCC.app/Contents/Resources/runtime/$PLATFORM" ;;
+  linux-amd64) ROOT="$REPO_ROOT/build/bin/NCC-linux-amd64/runtime/$PLATFORM" ;;
+  windows-amd64) ROOT="$REPO_ROOT/build/bin/NCC-windows-amd64" ;;
   *) echo "unsupported manifest platform $PLATFORM" >&2; exit 1 ;;
 esac
 
