@@ -1,0 +1,65 @@
+From: NFCX maintainers
+Subject: [PATCH] fix environment compatibility with modern MinGW-w64
+Upstream-Status: Pending
+Reference: https://github.com/nfc-tools/libnfc/blob/libnfc-1.8.0/contrib/win32/stdlib.c
+
+The bundled Windows setenv/unsetenv replacements declare `char *str[32]`,
+which is an array of pointers rather than a character buffer. Modern GCC
+rejects passing it to strcpy, strcat, and putenv. Even if corrected to a char
+array, its fixed size would overflow for ordinary libnfc environment values.
+
+Use MinGW-w64's bounds-checked _putenv_s implementation instead. Also undefine
+errno constants before mapping them to Winsock values, preserving libnfc's
+existing Windows semantics without macro redefinition warnings from current
+MinGW-w64 headers.
+
+diff --git a/contrib/win32/stdlib.c b/contrib/win32/stdlib.c
+--- a/contrib/win32/stdlib.c
++++ b/contrib/win32/stdlib.c
+@@ -37,22 +37,14 @@
+ 
+ //There is no setenv()and unsetenv() in windows,but we can use putenv() instead.
+ int setenv(const char *name, const char *value, int overwrite)
+ {
+-  char *env = getenv(name);
+-  if ((env && overwrite) || (!env)) {
+-    char *str[32];
+-    strcpy(str, name);
+-    strcat(str, "=");
+-    strcat(str, value);
+-    return putenv(str);
+-  }
+-  return -1;
++  if (!overwrite && getenv(name) != NULL)
++    return 0;
++
++  return _putenv_s(name, value);
+ }
+ 
+ void unsetenv(const char *name)
+ {
+-  char *str[32];
+-  strcpy(str, name);
+-  strcat(str, "=");
+-  putenv(str);
++  (void) _putenv_s(name, "");
+ }
+diff --git a/contrib/windows.h b/contrib/windows.h
+--- a/contrib/windows.h
++++ b/contrib/windows.h
+@@ -44,6 +44,15 @@
+ */
+ #    define snprintf(S, n, ...) sprintf(S, __VA_ARGS__)
+ #    define pipe(fds) _pipe(fds, 5000, _O_BINARY)
++#    ifdef ETIMEDOUT
++#      undef ETIMEDOUT
++#    endif
++#    ifdef ENOTSUP
++#      undef ENOTSUP
++#    endif
++#    ifdef ECONNABORTED
++#      undef ECONNABORTED
++#    endif
+ #    define ETIMEDOUT     WSAETIMEDOUT
+ #    define ENOTSUP       WSAEOPNOTSUPP
+ #    define ECONNABORTED  WSAECONNABORTED

@@ -1,0 +1,9 @@
+# This file is sourced by scripts/toolchain/mfcuk.sh. Keep values shell-safe.
+MFCUK_VERSION="0.3.8"
+MFCUK_TAG="mfcuk-0.3.8"
+MFCUK_COMMIT="0c5aff4a1b31074a8418b4bcb1b4b9bd6df477fd"
+MFCUK_SOURCE_URL="https://github.com/nfc-tools/mfcuk/archive/refs/tags/mfcuk-0.3.8.tar.gz"
+MFCUK_SOURCE_SHA256="c7091d1a16b132e1a4917ebc705065b60f3d1a0b449a776411ba39612a62ee89"
+MFCUK_LICENSE="GPL-2.0-or-later"
+MFCUK_LIBNFC_VERSION="1.8.0"
+MFCUK_PATCH_SERIES="0001-nfcx-runtime-integration.patch"

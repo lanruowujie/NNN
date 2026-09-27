@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=NFCX
+Comment=Cross-platform NFC desktop workbench
+Exec=NFCX
+Icon=NFCX
+Terminal=false
+Categories=Utility;

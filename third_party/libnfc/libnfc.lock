@@ -1,0 +1,9 @@
+# This file is sourced by scripts/toolchain/libnfc.sh. Keep values shell-safe.
+LIBNFC_VERSION="1.8.0"
+LIBNFC_TAG="libnfc-1.8.0"
+LIBNFC_COMMIT="f02ff51449240102c27a97173dc495e8e7789046"
+LIBNFC_SOURCE_URL="https://github.com/nfc-tools/libnfc/releases/download/libnfc-1.8.0/libnfc-1.8.0.tar.bz2"
+LIBNFC_SOURCE_SHA256="6d9ad31c86408711f0a60f05b1933101c7497683c2e0d8917d1611a3feba3dd5"
+LIBNFC_LICENSE="LGPL-3.0-or-later"
+LIBNFC_UTILS_LICENSE="BSD-2-Clause"
+LIBNFC_DRIVERS="pn532_uart"

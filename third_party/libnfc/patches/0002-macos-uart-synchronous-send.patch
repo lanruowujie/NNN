@@ -1,0 +1,64 @@
+From: Samy Kamkar <git@samy.pl>
+Subject: [PATCH] pace UART writes on macOS
+Upstream-Status: Submitted
+Reference: https://github.com/nfc-tools/libnfc/pull/633
+Based-On: 27f7537430779deb64018fed1c0f6d4cfaede3b4
+
+The macOS serial write is asynchronous. Sending an entire PN532 frame and
+immediately waiting for its ACK can time out before the frame has left the
+FT232RL. Use the byte-paced send implementation from the final state of
+upstream PR #633 on macOS, while retaining the original write on other POSIX
+platforms.
+
+diff --git a/libnfc/buses/uart.c b/libnfc/buses/uart.c
+--- a/libnfc/buses/uart.c
++++ b/libnfc/buses/uart.c
+@@ -374,11 +374,37 @@ int
+ uart_send(serial_port sp, const uint8_t *pbtTx, const size_t szTx, int timeout)
+ {
+   (void) timeout;
+   LOG_HEX(LOG_GROUP, "TX", pbtTx, szTx);
++#ifndef __APPLE__
+   if ((int) szTx == write(UART_DATA(sp)->fd, pbtTx, szTx))
+     return NFC_SUCCESS;
+   else
+     return NFC_EIO;
++#else
++  // macOS serial writes are asynchronous; pace bytes so a complete PN532
++  // frame is on the wire before the caller starts waiting for its ACK.
++  return uart_send_single(sp, pbtTx, szTx, timeout);
++#endif
++}
++
++/**
++ * @brief Send bytes individually with a baud-rate-sized delay
++ *
++ * @return 0 on success, otherwise a driver error is returned
++ */
++int
++uart_send_single(serial_port sp, const uint8_t *pbtTx, const size_t szTx, int timeout)
++{
++  (void) timeout;
++
++  for (size_t i = 0; i < szTx; i++) {
++    if (write(UART_DATA(sp)->fd, pbtTx + i, 1) != 1)
++      return NFC_EIO;
++
++    usleep(9); // ceil(1,000,000 microseconds / 115,200 baud)
++  }
++
++  return NFC_SUCCESS;
+ }
+ 
+ char **
+diff --git a/libnfc/buses/uart.h b/libnfc/buses/uart.h
+--- a/libnfc/buses/uart.h
++++ b/libnfc/buses/uart.h
+@@ -56,6 +56,7 @@ uint32_t uart_get_speed(const serial_port sp);
+ 
+ int     uart_receive(serial_port sp, uint8_t *pbtRx, const size_t szRx, void *abort_p, int timeout);
+ int     uart_send(serial_port sp, const uint8_t *pbtTx, const size_t szTx, int timeout);
++int     uart_send_single(serial_port sp, const uint8_t *pbtTx, const size_t szTx, int timeout);
+ 
+ char  **uart_list_ports(void);
+ 

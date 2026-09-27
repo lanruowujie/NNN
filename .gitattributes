@@ -1,0 +1,6 @@
+*.sh text eol=lf
+*.lock text eol=lf
+*.patch text eol=lf
+Makefile text eol=lf
+build/linux/AppRun text eol=lf
+third_party/libnfc/patches/series text eol=lf

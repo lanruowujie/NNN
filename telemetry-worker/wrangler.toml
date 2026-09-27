@@ -1,0 +1,13 @@
+name = "nfcx-telemetry"
+main = "src/index.js"
+compatibility_date = "2026-09-14"
+
+# Deploy this Worker as the origin for the dedicated telemetry subdomain.
+[[routes]]
+pattern = "telemetry.nfcx.tools"
+custom_domain = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nfcx-telemetry"
+database_id = "1e75db27-49f2-4f38-8946-f34140e54cd5"

@@ -1,0 +1,6 @@
+# One repository-relative filename per line, applied with patch -p1.
+0001-list-env-devices-without-conffiles.patch
+0002-macos-uart-synchronous-send.patch
+0003-modern-mingw-environment-compat.patch
+0004-modern-mingw-native-bitness.patch
+0005-windows-uart-query-dos-device.patch

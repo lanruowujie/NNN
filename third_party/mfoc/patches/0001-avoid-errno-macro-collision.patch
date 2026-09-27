@@ -1,0 +1,41 @@
+From: NFCX maintainers
+Subject: [PATCH] avoid errno macro collision on modern MinGW-w64
+Upstream-Status: Pending
+
+MinGW-w64 exposes errno as a macro backed by its runtime accessor. Using errno
+as a function parameter name therefore changes the parsed declaration and
+definition of usage(), causing integer call arguments to be diagnosed as
+function pointers. Rename the parameter without changing behavior.
+
+diff --git a/src/mfoc.h b/src/mfoc.h
+--- a/src/mfoc.h
++++ b/src/mfoc.h
+@@ -69,7 +69,7 @@ typedef struct {
+ } countKeys;
+ 
+ 
+-void usage(FILE *stream, int errno);
++void usage(FILE *stream, int exit_code);
+ void mf_init(mfreader *r);
+ void mf_configure(nfc_device *pdi);
+ void mf_select_tag(nfc_device *pdi, nfc_target *pnt);
+diff --git a/src/mfoc.c b/src/mfoc.c
+--- a/src/mfoc.c
++++ b/src/mfoc.c
+@@ -555,7 +555,7 @@ error:
+   exit(EXIT_FAILURE);
+ }
+ 
+-void usage(FILE *stream, int errno)
++void usage(FILE *stream, int exit_code)
+ {
+   fprintf(stream, "Usage: mfoc [-h] [-k key]... [-P probnum] [-T tolerance] [-O output]\n");
+   fprintf(stream, "\n");
+@@ -575,7 +575,7 @@ void usage(FILE *stream, int errno)
+   fprintf(stream, "This is mfoc version %s.\n", PACKAGE_VERSION);
+   fprintf(stream, "For more information, run: 'man mfoc'.\n");
+-  exit(errno);
++  exit(exit_code);
+ }
+ 
+ void mf_init(mfreader *r)

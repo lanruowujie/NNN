@@ -1,0 +1,38 @@
+From: NFCX maintainers
+Subject: [PATCH] enumerate Windows UART ports through DOS device mappings
+Upstream-Status: Pending
+Reference: https://github.com/nfc-tools/libnfc/blob/libnfc-1.8.0/contrib/win32/libnfc/buses/uart.c#L243-L283
+Reference: https://learn.microsoft.com/windows/win32/api/winbase/nf-winbase-querydosdevicea
+
+The libnfc 1.8.0 Windows UART backend treats GetDefaultCommConfig success as
+proof that a COM port exists. Some USB-to-serial devices can be opened through
+their COM name but do not pass that configuration lookup, so pn532_uart
+autoscan never tries the port. An explicit pn532_uart:COMx connstring still
+works in that situation.
+
+Use QueryDosDeviceA to test whether each COM name has a current Windows device
+mapping. The later pn532_uart scan still opens every candidate exclusively and
+performs the PN532 communication check before reporting it.
+
+diff --git a/contrib/win32/libnfc/buses/uart.c b/contrib/win32/libnfc/buses/uart.c
+--- a/contrib/win32/libnfc/buses/uart.c
++++ b/contrib/win32/libnfc/buses/uart.c
+@@ -242,15 +242,11 @@ uart_send(serial_port sp, const uint8_t *pbtTx, const size_t szTx, int timeout)
+ 
+ BOOL is_port_available(int nPort)
+ {
+-  TCHAR szPort[15];
+-  COMMCONFIG cc;
+-  DWORD dwCCSize;
++  char szPort[15];
++  char targetPath[1024];
+ 
+   sprintf(szPort, "COM%d", nPort);
+-
+-  // Check if this port is available
+-  dwCCSize = sizeof(cc);
+-  return GetDefaultCommConfig(szPort, &cc, &dwCCSize);
++  return QueryDosDeviceA(szPort, targetPath, sizeof(targetPath)) != 0;
+ }
+ 
+ // Path to the serial port is OS-dependant.

@@ -1,0 +1,35 @@
+From: NFCX maintainers
+Subject: [PATCH] list environment devices when conffiles are disabled
+Upstream-Status: Pending
+Reference: https://github.com/nfc-tools/libnfc/blob/libnfc-1.8.0/libnfc/nfc.c#L360-L409
+
+Environment variables populate context->user_defined_devices independently of
+CONFFILES, but nfc_list_devices only consumes that array inside a CONFFILES
+guard. This makes LIBNFC_DEVICE ineffective in builds that intentionally avoid
+system configuration files. The array is always part of nfc_context, so process
+it unconditionally.
+
+diff --git a/libnfc/nfc.c b/libnfc/nfc.c
+--- a/libnfc/nfc.c
++++ b/libnfc/nfc.c
+@@ -357,9 +357,8 @@ nfc_list_devices(nfc_context *context, nfc_connstring connstrings[], const size_
+ {
+   size_t device_found = 0;
+ 
+-#ifdef CONFFILES
+-  // Load manually configured devices (from config file and env variables)
+-  // TODO From env var...
++  // Load manually configured devices. The array can be populated by config
++  // files or independently by environment variables.
+   for (uint32_t i = 0; i < context->user_defined_device_count; i++) {
+     if (context->user_defined_devices[i].optional) {
+       // let's make sure the device exists
+@@ -406,7 +405,6 @@ nfc_list_devices(nfc_context *context, nfc_connstring connstrings[], const size_
+       if (device_found >= connstrings_len)
+         return device_found;
+     }
+   }
+-#endif // CONFFILES
+ 
+   // Device auto-detection
+   if (context->allow_autoscan) {

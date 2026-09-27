@@ -1,0 +1,7 @@
+# This file is sourced by scripts/toolchain/hardnested.sh. Keep values shell-safe.
+HARDNESTED_VERSION="0.10.9"
+HARDNESTED_COMMIT="a6007437405a0f18642a4bbca2eeba67c623d736"
+HARDNESTED_SOURCE_URL="https://github.com/nfc-tools/mfoc-hardnested/archive/a6007437405a0f18642a4bbca2eeba67c623d736.tar.gz"
+HARDNESTED_SOURCE_SHA256="cc2f631828175c0c0e624572f83b74ee5e010ffbc9591d790433c8e5938969ea"
+HARDNESTED_LICENSE="GPL-2.0-or-later"
+HARDNESTED_LIBNFC_VERSION="1.8.0"

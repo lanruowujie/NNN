@@ -1,0 +1,381 @@
+name: Cross-platform release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without the v prefix
+        required: true
+        default: 0.1.0-dev
+  push:
+    tags:
+      - "v[0-9]*.[0-9]*.[0-9]*"
+
+permissions:
+  contents: write
+
+env:
+  GO_VERSION: 1.25.1
+  NODE_VERSION: 24.8.0
+  WAILS_VERSION: 2.15.0
+
+jobs:
+  metadata:
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      commit: ${{ steps.release.outputs.commit }}
+      build_date: ${{ steps.release.outputs.build_date }}
+      tagged: ${{ steps.release.outputs.tagged }}
+    steps:
+      - id: release
+        shell: bash
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            tagged=true
+          else
+            version="$REQUESTED_VERSION"
+            tagged=false
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "commit=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          echo "build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          echo "tagged=$tagged" >> "$GITHUB_OUTPUT"
+
+  macos-arm64:
+    needs: metadata
+    runs-on: macos-15
+    env:
+      VERSION: ${{ needs.metadata.outputs.version }}
+      COMMIT: ${{ needs.metadata.outputs.commit }}
+      BUILD_DATE: ${{ needs.metadata.outputs.build_date }}
+      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Verify native architecture
+        run: test "$(uname -m)" = arm64
+      - name: Install pinned build dependencies
+        run: brew install autoconf automake libtool pkg-config xz
+      - name: Install frontend and Wails
+        run: |
+          npm ci --prefix frontend
+          go install github.com/wailsapp/wails/v2/cmd/wails@v${WAILS_VERSION}
+      - name: Set package version
+        run: go run ./cmd/nfcx-release set-version -file wails.json -version "$VERSION"
+      - name: Restore pinned native runtime cache
+        id: native-runtime
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache/toolchain
+            build/toolchain/darwin-arm64
+            runtime/darwin-arm64
+          key: nfcx-native-v1-darwin-arm64-${{ hashFiles('scripts/toolchain/**', 'third_party/libnfc/**', 'third_party/mfoc/**', 'third_party/mfcuk/**', 'third_party/mfoc-hardnested/**') }}
+      - name: Build pinned native runtime
+        if: steps.native-runtime.outputs.cache-hit != 'true'
+        run: |
+          make libnfc-build libnfc-verify libnfc-smoke
+          make mfoc-build mfcuk-build hardnested-build
+      - name: Save pinned native runtime cache
+        if: steps.native-runtime.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .cache/toolchain
+            build/toolchain/darwin-arm64
+            runtime/darwin-arm64
+          key: ${{ steps.native-runtime.outputs.cache-primary-key }}
+      - name: Verify cached native runtime
+        if: steps.native-runtime.outputs.cache-hit == 'true'
+        run: make libnfc-verify libnfc-smoke mfoc-verify mfcuk-verify hardnested-verify
+      - name: Test native build and packages
+        run: make libnfc-binding-test
+      - name: Build and stage application
+        run: make build VERSION="$VERSION" COMMIT="$COMMIT" BUILD_DATE="$BUILD_DATE" DIRTY=false
+      - name: Validate optional Apple release credentials
+        run: |
+          credentials=(
+            "$MACOS_CERTIFICATE"
+            "$MACOS_CERTIFICATE_PASSWORD"
+            "$MACOS_SIGNING_IDENTITY"
+            "$APPLE_ID"
+            "$APPLE_APP_PASSWORD"
+            "$APPLE_TEAM_ID"
+          )
+          configured=0
+          for credential in "${credentials[@]}"; do
+            if [[ -n "$credential" ]]; then
+              configured=$((configured + 1))
+            fi
+          done
+          if [[ "$configured" -ne 0 && "$configured" -ne "${#credentials[@]}" ]]; then
+            echo "Configure all six Apple signing/notarization secrets, or leave all six empty for an unsigned release." >&2
+            exit 1
+          fi
+      - name: Import Developer ID certificate
+        if: env.MACOS_CERTIFICATE != ''
+        run: |
+          certificate="$RUNNER_TEMP/nfcx-signing.p12"
+          keychain="$RUNNER_TEMP/nfcx-signing.keychain-db"
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$certificate"
+          security create-keychain -p actions "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p actions "$keychain"
+          security import "$certificate" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          security list-keychains -d user -s "$keychain" login.keychain-db
+          security set-key-partition-list -S apple-tool:,apple: -s -k actions "$keychain"
+      - name: Sign application and seal runtime manifest
+        run: scripts/release/sign-macos.sh build/bin/NFCX.app "$VERSION" "$COMMIT" "${MACOS_SIGNING_IDENTITY:--}"
+      - name: Verify packaged self-check
+        run: build/bin/NFCX.app/Contents/MacOS/NFCX --self-check --json
+      - name: Reject developer paths
+        run: go run ./cmd/nfcx-release scan-paths -root build/bin/NFCX.app -needle "$GITHUB_WORKSPACE"
+      - name: Create DMG
+        env:
+          NFCX_CODESIGN_IDENTITY: ${{ env.MACOS_SIGNING_IDENTITY }}
+          NFCX_UNSIGNED: ${{ env.MACOS_SIGNING_IDENTITY == '' && '1' || '0' }}
+        run: scripts/release/package-unix.sh "$VERSION"
+      - name: Configure notarization
+        if: env.MACOS_SIGNING_IDENTITY != ''
+        run: xcrun notarytool store-credentials NFCX-notary --apple-id "$APPLE_ID" --password "$APPLE_APP_PASSWORD" --team-id "$APPLE_TEAM_ID"
+      - name: Notarize and staple DMG
+        if: env.MACOS_SIGNING_IDENTITY != ''
+        run: scripts/release/notarize-macos.sh "$VERSION" NFCX-notary
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NFCX-${{ env.VERSION }}-darwin-arm64
+          path: dist/*.dmg
+          if-no-files-found: error
+
+  linux-amd64:
+    needs: metadata
+    runs-on: ubuntu-22.04
+    env:
+      VERSION: ${{ needs.metadata.outputs.version }}
+      COMMIT: ${{ needs.metadata.outputs.commit }}
+      BUILD_DATE: ${{ needs.metadata.outputs.build_date }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install pinned build dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends autoconf automake build-essential libtool liblzma-dev libgtk-3-dev libwebkit2gtk-4.1-dev patchelf pkg-config squashfs-tools
+      - name: Install frontend and Wails
+        run: |
+          npm ci --prefix frontend
+          go install github.com/wailsapp/wails/v2/cmd/wails@v${WAILS_VERSION}
+      - name: Set package version
+        run: go run ./cmd/nfcx-release set-version -file wails.json -version "$VERSION"
+      - name: Restore pinned native runtime cache
+        id: native-runtime
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache/toolchain
+            build/toolchain/linux-amd64
+            runtime/linux-amd64
+          key: nfcx-native-v1-linux-amd64-${{ hashFiles('scripts/toolchain/**', 'third_party/libnfc/**', 'third_party/mfoc/**', 'third_party/mfcuk/**', 'third_party/mfoc-hardnested/**') }}
+      - name: Build pinned native runtime
+        if: steps.native-runtime.outputs.cache-hit != 'true'
+        run: |
+          make libnfc-build libnfc-verify libnfc-smoke
+          make mfoc-build mfcuk-build hardnested-build
+      - name: Save pinned native runtime cache
+        if: steps.native-runtime.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .cache/toolchain
+            build/toolchain/linux-amd64
+            runtime/linux-amd64
+          key: ${{ steps.native-runtime.outputs.cache-primary-key }}
+      - name: Verify cached native runtime
+        if: steps.native-runtime.outputs.cache-hit == 'true'
+        run: make libnfc-verify libnfc-smoke mfoc-verify mfcuk-verify hardnested-verify
+      - name: Test native build and packages
+        run: make libnfc-binding-test
+      - name: Build and stage application
+        run: make build VERSION="$VERSION" COMMIT="$COMMIT" BUILD_DATE="$BUILD_DATE" DIRTY=false
+      - name: Verify WebKitGTK ABI
+        run: |
+          readelf -d build/bin/NFCX-linux-amd64/NFCX | grep -F 'Shared library: [libwebkit2gtk-4.1.so.0]'
+          if readelf -d build/bin/NFCX-linux-amd64/NFCX | grep -Fq 'libwebkit2gtk-4.0.so'; then
+            echo 'Linux application unexpectedly links legacy WebKitGTK 4.0' >&2
+            exit 1
+          fi
+      - name: Seal runtime manifest
+        run: scripts/release/generate-manifest.sh "$VERSION" "$COMMIT"
+      - name: Verify packaged self-check
+        run: build/bin/NFCX-linux-amd64/NFCX --self-check --json
+      - name: Reject developer paths
+        run: go run ./cmd/nfcx-release scan-paths -root build/bin/NFCX-linux-amd64 -needle "$GITHUB_WORKSPACE"
+      - name: Create AppImage and tar.gz
+        run: scripts/release/package-unix.sh "$VERSION"
+      - name: Smoke test AppImage extraction
+        run: APPIMAGE_EXTRACT_AND_RUN=1 "dist/NFCX-$VERSION-linux-amd64.AppImage" --self-check --json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NFCX-${{ env.VERSION }}-linux-amd64
+          path: |
+            dist/*.AppImage
+            dist/*.tar.gz
+          if-no-files-found: error
+
+  windows-amd64:
+    needs: metadata
+    runs-on: windows-2025
+    env:
+      VERSION: ${{ needs.metadata.outputs.version }}
+      COMMIT: ${{ needs.metadata.outputs.commit }}
+      BUILD_DATE: ${{ needs.metadata.outputs.build_date }}
+      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          # setup-go and go install add Go/Wails to the Windows runner PATH.
+          # The MSYS2 default (minimal) filters those entries, so Go-backed
+          # Makefile targets cannot resolve either executable.
+          path-type: inherit
+          update: false
+          install: >-
+            autoconf automake diffutils file findutils libtool make patch pkgconf sed tar
+            mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc mingw-w64-x86_64-xz
+      - name: Install frontend and Wails
+        shell: pwsh
+        run: |
+          npm ci --prefix frontend
+          go install github.com/wailsapp/wails/v2/cmd/wails@v${env:WAILS_VERSION}
+      - name: Set package version
+        shell: pwsh
+        run: go run ./cmd/nfcx-release set-version -file wails.json -version $env:VERSION
+      - name: Restore pinned native runtime cache
+        id: native-runtime
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache/toolchain
+            build/toolchain/windows-amd64
+            runtime/windows-amd64
+          key: nfcx-native-v1-windows-amd64-${{ hashFiles('scripts/toolchain/**', 'third_party/libnfc/**', 'third_party/mfoc/**', 'third_party/mfcuk/**', 'third_party/mfoc-hardnested/**') }}
+      - name: Build pinned native runtime
+        if: steps.native-runtime.outputs.cache-hit != 'true'
+        shell: msys2 {0}
+        run: |
+          make libnfc-build libnfc-verify libnfc-smoke
+          make mfoc-build mfcuk-build hardnested-build
+      - name: Save pinned native runtime cache
+        if: steps.native-runtime.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .cache/toolchain
+            build/toolchain/windows-amd64
+            runtime/windows-amd64
+          key: ${{ steps.native-runtime.outputs.cache-primary-key }}
+      - name: Verify cached native runtime
+        if: steps.native-runtime.outputs.cache-hit == 'true'
+        shell: msys2 {0}
+        run: make libnfc-verify libnfc-smoke mfoc-verify mfcuk-verify hardnested-verify
+      - name: Test native build and packages
+        shell: msys2 {0}
+        run: make libnfc-binding-test
+      - name: Build and stage application
+        shell: msys2 {0}
+        run: make build VERSION="$VERSION" COMMIT="$COMMIT" BUILD_DATE="$BUILD_DATE" DIRTY=false
+      - name: Sign Windows binaries when a certificate is available
+        if: env.WINDOWS_CERTIFICATE != ''
+        shell: pwsh
+        run: |
+          $certificate = Join-Path $env:RUNNER_TEMP "nfcx-signing.pfx"
+          [IO.File]::WriteAllBytes($certificate, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Filter signtool.exe -Recurse | Where-Object FullName -Match 'x64' | Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $signtool) { throw "signtool.exe was not found" }
+          Get-ChildItem build/bin/NFCX-windows-amd64 -File | Where-Object Extension -In '.exe','.dll' | ForEach-Object {
+            & $signtool.FullName sign /f $certificate /p $env:WINDOWS_CERTIFICATE_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $_.FullName
+            & $signtool.FullName verify /pa /v $_.FullName
+          }
+      - name: Seal runtime manifest
+        shell: msys2 {0}
+        run: scripts/release/generate-manifest.sh "$VERSION" "$COMMIT"
+      - name: Verify packaged self-check
+        shell: pwsh
+        run: '& ".\build\bin\NFCX-windows-amd64\NFCX.exe" --self-check --json'
+      - name: Reject developer paths
+        shell: pwsh
+        run: go run ./cmd/nfcx-release scan-paths -root build/bin/NFCX-windows-amd64 -needle $env:GITHUB_WORKSPACE
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          if ($env:WINDOWS_CERTIFICATE) {
+            scripts/release/package-windows.ps1 -Version $env:VERSION
+          } else {
+            scripts/release/package-windows.ps1 -Version $env:VERSION -Unsigned
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NFCX-${{ env.VERSION }}-windows-amd64
+          path: dist/*.zip
+          if-no-files-found: error
+
+  publish:
+    if: needs.metadata.outputs.tagged == 'true'
+    needs: [metadata, macos-arm64, linux-amd64, windows-amd64]
+    runs-on: ubuntu-22.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: NFCX-${{ needs.metadata.outputs.version }}-*
+          path: dist
+          merge-multiple: true
+      - name: Generate release checksums
+        shell: bash
+        run: go run ./cmd/nfcx-release checksums -output dist/SHA256SUMS dist/*.dmg dist/*.AppImage dist/*.tar.gz dist/*.zip
+      - name: Create or update GitHub Release
+        shell: bash
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "NFCX ${{ needs.metadata.outputs.version }}"
+          fi
+          gh release upload "$GITHUB_REF_NAME" dist/* --clobber

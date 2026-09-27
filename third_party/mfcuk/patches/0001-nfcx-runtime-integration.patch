@@ -1,0 +1,74 @@
+From: NFCX maintainers
+Subject: [PATCH] integrate mfcuk with the NFCX runtime
+Upstream-Status: Pending
+
+The configure script requires one of three platform-specific endian headers,
+even though the source uses GCC byte-swap builtins and already contains a
+compiler-independent fallback. MinGW-w64 provides none of those headers, so
+keep detecting them but do not reject an otherwise supported compiler.
+
+MinGW-w64 defines the standard _WIN32 platform macro, while this old source
+checks WIN32 and accidentally selects its POSIX select()-based sleep path.
+Use _WIN32 consistently so the existing Sleep() and xgetopt path is selected.
+
+Also emit stable NFCX progress, result, and version lines without changing the
+recovery algorithm.
+
+diff --git a/configure.ac b/configure.ac
+--- a/configure.ac
++++ b/configure.ac
+@@ -38,9 +38,6 @@ AC_CHECK_FUNCS([memset strchr strtoul])
+ 
+ # Checks for endianness convertion
+ AC_CHECK_HEADERS([endian.h sys/endian.h CoreFoundation/CoreFoundation.h])
+-if test $ac_cv_header_endian_h = "no" -a $ac_cv_header_sys_endian_h = "no" -a $ac_cv_header_CoreFoundation_CoreFoundation_h = "no"; then
+-  AC_MSG_ERROR(["Can't locate usable header file for endianness convertions."]);
+-fi
+ 
+ AC_CHECK_HEADERS([byteswap.h])
+ 
+diff --git a/src/mfcuk.c b/src/mfcuk.c
+--- a/src/mfcuk.c
++++ b/src/mfcuk.c
+@@ -177 +177 @@ static inline uint64_t bswap_64(uint64_t x)
+-#ifdef WIN32
++#if defined(_WIN32)
+@@ -744,5 +744,7 @@ static void print_identification(void)
+   fprintf(stdout, "%s - %s\n", BUILD_NAME, BUILD_VERSION);
+   fprintf(stdout, "by %s\n", BUILD_AUTHOR);
++  fprintf(stdout, "NFCX machine result: 1\n");
++  fprintf(stdout, "NFCX_VERSION %s\n", PACKAGE_VERSION);
+   fprintf(stdout, "\n");
+ }
+ 
+@@ -1672,5 +1674,9 @@ int main(int argc, char *argv[])
+           mfcuk_darkside_reset_advanced(pnd);
+ 
+           numAuthAttempts++;
++          if ((numAuthAttempts == 1) || ((numAuthAttempts % 25) == 0)) {
++            printf("NFCX_PROGRESS key=%c sector=%d attempts=%u\n", (j == keyA) ? 'A' : 'B', i, numAuthAttempts);
++            fflush(stdout);
++          }
+         } while (uiErrCode != MFCUK_OK_KEY_RECOVERED);
+ 
+@@ -1680,5 +1686,8 @@ int main(int argc, char *argv[])
+         if (!mfcuk_key_uint64_to_arr(&ui64KeyRecovered, (j == keyA) ? (&(ptr_trailer->abtKeyA[0])) : (&(ptr_trailer->abtKeyB[0])))) {
+           WARN("mfcuk_key_uint64_to_arr() failed, recovered key should have been %012"PRIx64"", ui64KeyRecovered);
++        } else {
++          printf("NFCX_RESULT key=%c sector=%d value=%012"PRIX64"\n",
++                 (j == keyA) ? 'A' : 'B', i, ui64KeyRecovered);
+         }
+       }
+     } // for (j=keyA; j<=keyB; j++)
+diff --git a/src/mfcuk_utils.h b/src/mfcuk_utils.h
+--- a/src/mfcuk_utils.h
++++ b/src/mfcuk_utils.h
+@@ -55 +55 @@
+-#ifdef WIN32
++#if defined(_WIN32)
+@@ -66 +66 @@
+-#ifdef WIN32
++#if defined(_WIN32)
+@@ -74 +74 @@
+-#ifdef WIN32
++#if defined(_WIN32)

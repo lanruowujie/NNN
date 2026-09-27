@@ -1,0 +1,69 @@
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
+
+# Editor/IDE
+# .idea/
+# .vscode/
+.DS_Store
+/MifareOneTool/
+/.idea/.gitignore
+/.idea/modules.xml
+/.idea/NFCX.iml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/vcs.xml
+/scripts/*.bin
+
+# Wails and frontend build outputs
+/build/bin/
+/build/toolchain/
+/dist/
+/.cache/toolchain/
+/frontend/dist/*
+!/frontend/dist/.gitkeep
+/frontend/node_modules/
+/frontend/package.json.md5
+/frontend/wailsjs/
+
+# Generated native runtime files. Keep the documented directory skeleton.
+/runtime/*/LICENSES/
+/runtime/*/source.lock
+/runtime/*/nfcx-fake-engine
+/runtime/*/mfoc
+/runtime/*/mfoc-source.lock
+/runtime/*/mfoc.sha256
+/runtime/*/mfcuk
+/runtime/*/mfcuk-source.lock
+/runtime/*/mfcuk.sha256
+/runtime/*/mfoc-hardnested
+/runtime/*/mfoc-hardnested-source.lock
+/runtime/*/mfoc-hardnested.sha256
+/runtime/*/nfc-mfsetuid
+/runtime/*/nfc-mfsetuid.exe
+/runtime/*/nfc-mfsetuid.sha256
+/runtime/*/patches/
