@@ -6,19 +6,19 @@
 
 <p align="center"><a href="README.md">English</a> | <a href="README.zh-CN.md">简体中文</a></p>
 
-NCC brings reader discovery, card information, reads, protected writes, raw dumps, key management, and recovery workflows into one desktop application for macOS, Windows, and Linux. It is for MIFARE Classic cards you own or are authorized to test.
+NCC brings reader discovery, card information, reads, protected writes, raw dumps, key management, and recovery workflows into one desktop application for macOS, Windows, and Linux. It is for compatible cards you own or are authorized to test.
 
 NCC is open source and uses a clear, direct GUI so NCC work does not depend on a collection of command-line tools.
 
 Website: [github.com/lanruowujie/NCC](https://github.com/lanruowujie/NCC) · Downloads: [GitHub Releases](https://github.com/lanruowujie/NCC/releases)
 
-> **NCC project identity:** NCC is the private project name and user-facing format label for this fork. It uses the existing PN532/libnfc/MIFARE Classic implementation unchanged; renaming the interface does not change the underlying reader protocol or card protocol.
+> **NCC project identity:** NCC is the private project name and user-facing format label for this fork. It uses the existing PN532/libnfc/existing reader/card implementation unchanged; renaming the interface does not change the underlying reader protocol or card protocol.
 
 # What NCC can do
 
 - Discover and connect NCC readers.
 - Detect cards and show their UID, ATQA, SAK, and card type.
-- Work with MIFARE Classic 1K: authenticate with Key A or Key B, read blocks, edit data, and write changes.
+- Work with 兼容 1K 卡: authenticate with Key A or Key B, read blocks, edit data, and write changes.
 - Save and load compatible raw dumps (`.bin` / `.mfd`) with sidecar metadata; restore with capacity, BCC, access-bit, and per-block read-back checks.
 - Scan common keys and manage a local key catalog.
 - Run the integrated recovery sequence on a validated PN532 UART reader: common keys, Darkside, Nested, Hardnested, and read verification.
@@ -113,12 +113,12 @@ The system may check more than the UID: it may validate data in other sectors or
 
 <details><summary>What are Key A and Key B?</summary>
 
-They are the two authentication keys used by each MIFARE Classic sector. Access bits determine what each key can read or write; they are not universal passwords and should not be shared carelessly.
+They are the two authentication keys used by each compatible card format sector. Access bits determine what each key can read or write; they are not universal passwords and should not be shared carelessly.
 </details>
 
 <details><summary>What are Darkside and Nested?</summary>
 
-They are key-recovery techniques for known weaknesses in some MIFARE Classic cards. NCC only exposes the related workflows for cards and systems you own or are explicitly authorized to test.
+They are key-recovery techniques for known weaknesses in some compatible cards. NCC only exposes the related workflows for cards and systems you own or are explicitly authorized to test.
 </details>
 
 <details><summary>Can I clone a car key?</summary>

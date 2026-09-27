@@ -87,7 +87,7 @@ NCC --self-check --json
 2. 检查“关于 / 诊断”全部通过；
 3. 连接 PN532 UART；
 4. 寻卡并读取授权测试卡；
-5. 保存 1024-byte MIFARE Classic 1K dump；
+5. 保存 1024-byte 兼容 1K 卡 dump；
 6. 在授权测试卡执行一次非 block 0 写入并回读验证；
 7. 至少在一个平台启动并取消 mfoc，确认设备被关闭后重新打开。
 

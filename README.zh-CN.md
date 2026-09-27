@@ -6,19 +6,19 @@
 
 <p align="center"><a href="README.md">English</a> | <a href="README.zh-CN.md">简体中文</a></p>
 
-NCC 将读卡器发现、卡片信息、读取写入等功能集中到一个 macOS、Windows 与 Linux 桌面应用中，适用于你拥有或获准测试的 MIFARE Classic 卡片。
+NCC 将读卡器发现、卡片信息、读取写入等功能集中到一个 macOS、Windows 与 Linux 桌面应用中，适用于你拥有或获准测试的 compatible card format 卡片。
 
 NCC 坚持开源，并用清晰、直接的 GUI 让 NCC 操作不再依赖零散的命令行工具。
 
 官网：[github.com/lanruowujie/NCC](https://github.com/lanruowujie/NCC) · 下载：[GitHub Releases](https://github.com/lanruowujie/NCC/releases)
 
-> **NCC 项目说明：** NCC 是本项目的私有项目名称和用户界面格式标签。本项目保留现有 PN532/libnfc/MIFARE Classic 实现，品牌改名不改变底层读卡器协议或卡片协议。
+> **NCC 项目说明：** NCC 是本项目的私有项目名称和用户界面格式标签。本项目保留现有 PN532/libnfc/compatible card format 实现，品牌改名不改变底层读卡器协议或卡片协议。
 
 # NCC 能做什么
 
 - 发现并连接 NCC 读卡器
 - 检测卡片并显示 UID、ATQA、SAK 与卡片类型。
-- 操作 MIFARE Classic 1K：使用 Key A/Key B 认证、读取编辑数据及写入变更。
+- 操作 兼容 1K 卡：使用 Key A/Key B 认证、读取编辑数据及写入变更。
 - 保存和加载兼容的原始 dump（`.bin` / `.mfd`）及并列元数据；恢复时执行容量、BCC、访问控制位和逐块回读检查。
 - 扫描常见密钥，并管理本地密钥目录。
 - 在已验证的 PN532 UART 读卡器上运行集成恢复流程：常见密钥、Darkside、Nested、Hardnested 与读取验证。
@@ -115,12 +115,12 @@ UID 所在的 block 0 默认不能写入。只有部分特殊的 Gen1/Gen2 卡�
 
 <details><summary>什么是 Key A 和 Key B？</summary>
 
-它们是 MIFARE Classic 每个扇区使用的两把认证密钥。访问控制位决定各自可以读取或写入哪些数据；它们不是通用密码，也不应随意公开。
+它们是 compatible card format 每个扇区使用的两把认证密钥。访问控制位决定各自可以读取或写入哪些数据；它们不是通用密码，也不应随意公开。
 </details>
 
 <details><summary>Darkside 和 Nested 是什么？</summary>
 
-它们是针对部分 MIFARE Classic 卡片已知弱点的密钥恢复方法。NCC 仅在你拥有或获明确授权的测试场景中提供相应工作流。
+它们是针对部分 compatible card format 卡片已知弱点的密钥恢复方法。NCC 仅在你拥有或获明确授权的测试场景中提供相应工作流。
 </details>
 
 <details><summary>能复制车钥匙吗？</summary>
