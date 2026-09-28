@@ -15,8 +15,12 @@
 ```bash
 cd tools/virtual_lab
 python3 virtual_card_lab.py --demo
+python3 virtual_card_lab.py --crack   # 一键受限口令审计，仅合成卡
+python3 virtual_card_lab.py --clone   # 一键静态克隆模拟，随后运行检测
 python3 -m unittest -v test_virtual_card_lab.py
 ```
+
+`--crack` 不是针对真实目标的无限密码爆破，而是对程序内置合成卡执行最多 64 次的固定候选审计；`--clone` 只在内存中复制静态快照，并立即验证动态认证失败。两个入口均不能接收读卡器、真实 dump、网络地址或外部命令参数。
 
 输出会明确标注：
 

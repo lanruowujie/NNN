@@ -156,13 +156,29 @@ def run_demo() -> dict[str, object]:
     }
 
 
+def one_click_audit() -> dict[str, object]:
+    """Run the bounded password audit against a fresh synthetic card."""
+    card = VirtualCard.create()
+    result = bounded_password_audit(card, ["123456", "password", "lab-pass-07", "admin"])
+    return {"action": "one_click_audit", "result": result.__dict__, "scope": "synthetic card only"}
+
+
+def one_click_clone() -> dict[str, object]:
+    """Create a static-dump clone in memory and immediately exercise defenses."""
+    card = VirtualCard.create()
+    clone = StaticClone(card.static_export())
+    return {"action": "one_click_clone", "result": detect_clone(card, clone), "scope": "synthetic card only"}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NNN offline virtual-card security lab")
-    parser.add_argument("--demo", action="store_true", help="run the deterministic lab scenario")
+    actions = parser.add_mutually_exclusive_group(required=True)
+    actions.add_argument("--demo", action="store_true", help="run the complete lab scenario")
+    actions.add_argument("--crack", action="store_true", help="one-click bounded audit of the synthetic card")
+    actions.add_argument("--clone", action="store_true", help="one-click static clone simulation and detection")
     args = parser.parse_args()
-    if not args.demo:
-        parser.error("use --demo; this tool does not accept card readers, dumps, or network targets")
-    print(json.dumps(run_demo(), indent=2, ensure_ascii=False))
+    action = run_demo if args.demo else one_click_audit if args.crack else one_click_clone
+    print(json.dumps(action(), indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":

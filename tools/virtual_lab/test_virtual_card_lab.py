@@ -4,7 +4,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from virtual_card_lab import MAX_AUDIT_ATTEMPTS, StaticClone, VirtualCard, bounded_password_audit, detect_clone
+from virtual_card_lab import (
+    MAX_AUDIT_ATTEMPTS,
+    StaticClone,
+    VirtualCard,
+    bounded_password_audit,
+    detect_clone,
+    one_click_audit,
+    one_click_clone,
+)
 
 
 class VirtualCardLabTests(unittest.TestCase):
@@ -39,6 +47,17 @@ class VirtualCardLabTests(unittest.TestCase):
     def test_invalid_budget_is_rejected(self):
         with self.assertRaises(ValueError):
             bounded_password_audit(VirtualCard.create(), [], max_attempts=MAX_AUDIT_ATTEMPTS + 1)
+
+    def test_one_click_audit_is_lab_only_and_bounded(self):
+        result = one_click_audit()
+        self.assertEqual(result["action"], "one_click_audit")
+        self.assertEqual(result["scope"], "synthetic card only")
+        self.assertLessEqual(result["result"]["attempts"], MAX_AUDIT_ATTEMPTS)
+
+    def test_one_click_clone_is_detected_and_rejected(self):
+        result = one_click_clone()
+        self.assertEqual(result["action"], "one_click_clone")
+        self.assertTrue(result["result"]["clone_rejected"])
 
 
 if __name__ == "__main__":
