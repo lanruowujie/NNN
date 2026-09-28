@@ -1,8 +1,6 @@
 # NNN
 
-NNN is a cross-platform GUI workbench for **authorized NFC/card read-write security testing**. Its primary purpose is to validate card data handling, authentication boundaries, dump integrity, write safety, recovery behavior, and clone-detection controls in controlled real environments and in an offline synthetic-card laboratory.
-
-> Use NNN only with cards, readers, and systems that you own or are explicitly authorized to test. The project is not intended to bypass access controls or copy credentials for unauthorized use.
+NNN is a cross-platform GUI workbench for NFC/card read-write security testing, protocol validation, data-integrity checks, and clone-detection evaluation. Its workflows cover controlled real environments and an offline synthetic-card laboratory; use follows the target system, card ownership, and applicable testing standards.
 
 ## Design logic
 
@@ -34,7 +32,7 @@ The GUI never handles native reader objects directly. Device operations are seri
 
 ## Main test targets
 
-NNN is intended for authorized real-environment testing of:
+NNN is intended for real-environment testing of:
 
 - reader discovery, connection loss, card insertion/removal, and device ownership;
 - known-key authentication and access-control behavior;
@@ -66,7 +64,7 @@ The main window exposes reader state, card facts, sector/block workbench data, k
 - **One-click bounded audit**: demonstrates weak-secret auditing against the synthetic card only;
 - **One-click clone detection**: copies a static synthetic snapshot in memory and demonstrates why dynamic authentication and counters reject it.
 
-The same task bar shows stage progress and the cancel action for both real authorized workflows and the virtual lab.
+The same task bar shows stage progress and the cancel action for both real-environment workflows and the virtual lab.
 
 ## Build and validation
 
@@ -83,7 +81,7 @@ go test ./...
 cd frontend && npm run build
 ```
 
-Real-hardware tests must be explicitly enabled and must use designated test cards and test systems. They must never run as part of an ordinary offline test command.
+Real-hardware tests are explicitly separated from ordinary offline test commands.
 
 ## Data and privacy
 
@@ -93,9 +91,9 @@ Card UIDs, keys, dumps, and card contents are not uploaded by the virtual lab. R
 
 NNN source code is licensed under the MIT License. Runtime components and external tools may have separate licenses. Read [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistribution.
 
-## Responsible use
+## Testing practice
 
-NNN is a security-testing workbench, not an authorization bypass tool. Test only within a written scope, use isolated fixtures or designated test cards, preserve evidence without exposing secrets, and stop when a test exceeds the approved scope.
+Use isolated fixtures, designated test cards, sanitized evidence, and the testing standard defined for the target system.
 
 - [Chinese README](README.zh-CN.md)
 - [Documentation index](docs/README.md)

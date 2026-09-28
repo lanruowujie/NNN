@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="NNN 是用于授权 NFC 卡片读写安全测试的图形化工作台，支持真实受控环境与离线虚拟卡实验。">
-  <title>NNN | 授权卡片安全测试工作台</title>
+  <meta name="description" content="NNN 面向 NFC/卡片读写安全测试、协议验证、数据完整性检查和防克隆机制评估。">
+  <title>NNN | 卡片安全测试工作台</title>
   <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32.png">
   <link rel="apple-touch-icon" href="../assets/images/apple-touch-icon.png">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem('ncc-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}let savedLanguage;try{savedLanguage=localStorage.getItem('ncc-website-language')}catch(e){}const locales=navigator.languages?.length?navigator.languages:[navigator.language];const language=savedLanguage==='en'||savedLanguage==='zh-CN'?savedLanguage:(locales.some(locale=>locale.replace('_','-').toLowerCase().startsWith('zh'))?'zh-CN':'en');if(language==='en')location.replace('../')</script>
@@ -14,13 +14,13 @@
 <body>
 <header class="nav wrap"><a class="brand" href="#top"><img src="../assets/images/ncc-logo.png" alt=""><span>NNN</span></a><nav><a href="#design">设计</a><a href="#mechanism">机理</a><a href="#testing">测试用途</a><a href="#lab">虚拟实验</a><a href="../" data-language>EN</a></nav></header>
 <main id="top">
-<section class="hero wrap"><div><p class="eyebrow">NNN 安全测试工作台</p><h1>观察卡片安全行为，<em>始终保持边界。</em></h1><p class="lede">NNN 是一个跨平台 GUI，用于在受控真实环境和离线合成卡实验室中执行获得授权的 NFC/卡片读写安全测试。</p><p class="actions"><a class="button primary" href="https://github.com/lanruowujie/NNN">查看源码</a><a class="button quiet" href="https://github.com/lanruowujie/NNN/blob/master/README.zh-CN.md">阅读设计说明</a></p></div><div class="hero-mark"><img src="../assets/images/ncc-logo.png" alt="NNN 标志"><span>为有边界、可观察的测试而设计</span></div></section>
+<section class="hero wrap"><div><p class="eyebrow">NNN 安全测试工作台</p><h1>观察卡片安全行为，<em>建立清晰模型。</em></h1><p class="lede">NNN 面向 NFC/卡片读写安全测试、协议验证、数据完整性检查和防克隆机制评估，覆盖真实环境与合成虚拟卡实验。</p><p class="actions"><a class="button primary" href="https://github.com/lanruowujie/NNN">查看源码</a><a class="button quiet" href="https://github.com/lanruowujie/NNN/blob/master/README.zh-CN.md">阅读设计说明</a></p></div><div class="hero-mark"><img src="../assets/images/ncc-logo.png" alt="NNN 标志"><span>为有边界、可观察的测试而设计</span></div></section>
 <section id="design" class="wrap section"><p class="eyebrow">设计逻辑</p><h2>在 GUI、读卡器、工作流和证据之间建立窄边界。</h2><div class="grid cards"><article><b>01</b><h3>GUI 边界</h3><p>Wails 绑定只暴露可序列化服务和任务事件，GUI 不持有原生读卡器句柄。</p></article><article><b>02</b><h3>读卡器边界</h3><p>设备管理器串行化读卡器访问，并将其与工作台及报告逻辑隔离。</p></article><article><b>03</b><h3>写入安全</h3><p>通过预检、认证、写入顺序、卡片身份检查和回读验证保护写操作。</p></article><article><b>04</b><h3>任务可观察</h3><p>长任务发送可取消的进度、阶段、日志和结构化结果，便于复核。</p></article></div></section>
-<section id="mechanism" class="wrap section split"><div><p class="eyebrow">运行机理</p><h2>从选定读卡器到可测试结果。</h2><p>系统先采集卡片事实，再通过 Reader 抽象执行读写工作流；工作台记录已知字节、修改项、访问控制位和校验告警。恢复与审计操作作为任务运行，通过同一事件流向 GUI 报告。</p></div><div class="reader-list"><div><strong>1 · 准备</strong><p>选择经过验证的读卡器配置，并确认授权测试范围。</p></div><div><strong>2 · 操作</strong><p>对指定测试卡执行认证、读取、编辑、dump、恢复或验证。</p></div><div><strong>3 · 校验</strong><p>检查结构、卡片身份、计数器、访问控制和回读结果。</p></div><div><strong>4 · 报告</strong><p>保存进度、日志、结果和脱敏证据，用于回归分析。</p></div></div></section>
-<section id="testing" class="wrap section"><p class="eyebrow">主要用途</p><h2>授权真实环境中的读写卡攻防测试。</h2><p>NNN 面向安全团队和开发者，用于测试自己拥有或明确获准评估的卡片与门禁系统。典型目标包括认证边界、重放与旧状态处理、写入安全、恢复失败隔离和防克隆控制。它不用于未授权访问、凭证复制或绕过第三方系统。</p></section>
+<section id="mechanism" class="wrap section split"><div><p class="eyebrow">运行机理</p><h2>从选定读卡器到可测试结果。</h2><p>系统先采集卡片事实，再通过 Reader 抽象执行读写工作流；工作台记录已知字节、修改项、访问控制位和校验告警。恢复与审计操作作为任务运行，通过同一事件流向 GUI 报告。</p></div><div class="reader-list"><div><strong>1 · 准备</strong><p>选择读卡器配置并定义目标测试上下文。</p></div><div><strong>2 · 操作</strong><p>对指定测试卡执行认证、读取、编辑、dump、恢复或验证。</p></div><div><strong>3 · 校验</strong><p>检查结构、卡片身份、计数器、访问控制和回读结果。</p></div><div><strong>4 · 报告</strong><p>保存进度、日志、结果和脱敏证据，用于回归分析。</p></div></div></section>
+<section id="testing" class="wrap section"><p class="eyebrow">主要用途</p><h2>真实环境中的读写卡攻防测试。</h2><p>NNN 面向安全团队和开发者，用于评估卡片与门禁系统行为。典型目标包括认证边界、重放与旧状态处理、写入安全、恢复失败隔离和防克隆控制。测试依据目标系统、卡片所有权及适用规范执行。</p></section>
 <section id="lab" class="wrap section"><p class="eyebrow">离线虚拟卡实验室</p><h2>不接读卡器、不碰真实卡片也能复现机理。</h2><p>虚拟卡实验室只使用合成数据。受限审计用于展示弱密钥风险；静态克隆模拟用于展示复制 UID 和内存后仍应被动态认证与计数器检查拒绝。GUI 会显示实时进度和日志，同时禁用硬件、网络、真实 dump 和真实卡片协议。</p></section>
 <section class="wrap download"><div><p class="eyebrow">源码与文档</p><h2>查看实现和测试边界。</h2></div><a class="button primary" href="https://github.com/lanruowujie/NNN">打开 NNN</a></section>
 </main>
-<footer class="wrap"><a class="brand" href="#top"><img src="../assets/images/ncc-logo.png" alt=""><span>NNN</span></a><p>仅用于获得授权的安全测试。</p><p><a href="https://github.com/lanruowujie/NNN">GitHub</a> · <a href="https://github.com/lanruowujie/NNN/blob/master/README.zh-CN.md">README</a> · <a href="https://github.com/lanruowujie/NNN/blob/master/LICENSE">License</a></p></footer>
+<footer class="wrap"><a class="brand" href="#top"><img src="../assets/images/ncc-logo.png" alt=""><span>NNN</span></a><p>卡片读写安全测试工作台。</p><p><a href="https://github.com/lanruowujie/NNN">GitHub</a> · <a href="https://github.com/lanruowujie/NNN/blob/master/README.zh-CN.md">README</a> · <a href="https://github.com/lanruowujie/NNN/blob/master/LICENSE">License</a></p></footer>
 </body>
 </html>
