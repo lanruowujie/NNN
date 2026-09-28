@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="NCC 是跨平台、开源、简单易用的 NCC 图形化桌面工具。">
-  <title>NCC - NCC eXtended | 跨平台 NCC 图形化工具</title>
+  <meta name="description" content="NNN 是用于授权 NFC 卡片读写安全测试的图形化工作台，支持真实受控环境与离线虚拟卡实验。">
+  <title>NNN | 授权卡片安全测试工作台</title>
   <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32.png">
   <link rel="apple-touch-icon" href="../assets/images/apple-touch-icon.png">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem('ncc-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}let savedLanguage;try{savedLanguage=localStorage.getItem('ncc-website-language')}catch(e){}const locales=navigator.languages?.length?navigator.languages:[navigator.language];const language=savedLanguage==='en'||savedLanguage==='zh-CN'?savedLanguage:(locales.some(locale=>locale.replace('_','-').toLowerCase().startsWith('zh'))?'zh-CN':'en');if(language==='en')location.replace('../')</script>
@@ -12,36 +12,15 @@
   <script defer src="../assets/js/theme.js"></script>
 </head>
 <body>
-  <header class="nav wrap"><a class="brand" href="#top"><img src="../assets/images/ncc-logo.png" alt=""><span>NCC</span></a><nav><a href="#why">为什么选择 NCC</a><a href="#features">功能</a><a href="#readers">读卡器</a><a href="#faq">FAQ</a><a href="#privacy">隐私</a><a href="https://github.com/sponsors/BennyThink">赞助</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="切换至浅色模式"><span aria-hidden="true">☀</span><span data-theme-label>浅色</span></button><a class="language" href="../" data-language="en">EN</a></nav></header>
-  <main id="top">
-    <section class="hero wrap"><div><p class="eyebrow">NCC 桌面工作台</p><h1>轻而易举地操作 <em>NCC 卡片。</em></h1><p class="lede">面向授权兼容卡操作的专注桌面工具：读取、写入、dump、密钥管理，以及已验证 PN532 UART 流程中的密钥恢复。</p><p class="lede">NCC 是跨平台、开源、简单易用的 NCC 图形化桌面工具，支持 macOS、Windows 和 Linux。</p><p class="actions"><a class="button primary" href="https://github.com/lanruowujie/NCC/releases">下载 NCC</a><a class="button quiet" href="https://github.com/lanruowujie/NCC">GitHub ↗</a></p></div><div class="hero-mark"><img src="../assets/images/ncc-logo.png" alt="NCC NCC 标签标志"><span>为审慎操作而设计</span></div></section>
-    <section id="why" class="wrap section"><p class="eyebrow">为什么选择 NCC</p><h2>为跨平台 NCC 图形化体验而生。</h2><div class="grid cards"><article><b>01</b><h3>跨平台</h3><p>在 macOS、Windows 和 Linux 上提供一致的桌面体验。</p></article><article><b>02</b><h3>开源</h3><p>源码公开，使用 MIT License。</p></article><article><b>03</b><h3>图形化界面</h3><p>通过 GUI 完成 NCC 卡片操作，无需记忆命令行参数。</p></article><article><b>04</b><h3>简单易用</h3><p>把常用 NCC 操作集中在一个清晰的步骤中。</p></article></div></section>
-    <section id="features" class="wrap section"><p class="eyebrow">功能</p><h2>在一个清晰的界面中完成工作流。</h2><div class="grid cards"><article><b>01</b><h3>发现与查看</h3><p>发现读卡器、扫描卡片，并查看 UID、ATQA、SAK 与卡片信息。</p></article><article><b>02</b><h3>读取、编辑与恢复</h3><p>认证 block、保存原始 dump、重新加载，并对每次写入进行回读验证。</p></article><article><b>03</b><h3>密钥与恢复</h3><p>扫描常见密钥，并在已授权时运行 PN532 UART 可用的恢复路径。</p></article><article><b>04</b><h3>写入安全</h3><p>检查 dump 、BCC、访问控制位、换卡情况与受保护的 block 0 操作。</p></article></div></section>
-    <section id="readers" class="wrap section split"><div><p class="eyebrow">支持的读卡器</p><h2>只承诺已经验证的能力。</h2><p>NCC 的发布配置已在 PN532 UART + FT232RL 上完成测试。</p></div><div class="reader-list"><div><strong>PN532 + FT232RL</strong><span class="tested">已测试</span><p>串口 · libnfc pn532_uart · macOS / Windows / Linux 构建</p></div><div><strong>其他 PN532 UART 适配器</strong><span class="expected">预期兼容</span><p>串口 · 需要适配器驱动与串口权限</p></div><div><strong>ACR122U / ACR1552U</strong><span class="unsupported">未支持</span><p>尚未完成 NCC 硬件验证，也未启用发布配置</p></div></div></section>
-    <section class="wrap section screenshots"><p class="eyebrow">软件截图</p><h2>一个专注、清晰的工作区。</h2><figure class="screenshot-frame" style="max-width:900px;margin-inline:auto"><img src="../assets/images/main-window.jpg" alt="NCC 主界面，展示读卡器连接、卡片详情和扇区 / block 工作区。"></figure></section>
-    <section class="wrap section quick"><p class="eyebrow">快速开始</p><ol><li><b>01</b> 连接读卡器</li><li><b>02</b> 启动 NCC</li><li><b>03</b> 扫描卡片</li><li><b>04</b> 使用 NCC 工具</li></ol></section>
-    <section id="faq" class="wrap section"><p class="eyebrow">常见问题</p><h2>开始前，你可能想知道这些。</h2><div class="faq-list">
-      <details><summary>还需要读卡器吗？</summary><p>需要。NCC 通过兼容的外接读卡器与实体 NCC 卡通信。</p></details>
-      <details><summary>支持什么设备？</summary><p>已测试的组合是 PN532 + FT232RL。其他串口适配器理论上也可使用，但建议选用 FT232RL。请将 PN532 调至 UART/HSU 模式，并交叉连接数据线（PN532 RX 接串口 TX）。建议焊接连接，避免杜邦线接触不良。</p></details>
-      <details><summary>能把门禁卡写入 iPhone 吗？</summary><p>NCC 可以操作实体门禁卡，但 iPhone 中的卡不像普通白卡一样可任意写入。可考虑购买 NCC 卡贴，写入后贴在手机背面使用。</p></details>
-      <details><summary>建议买什么卡片？</summary><p>建议准备 CUID 卡用于已获授权的测试；它通常支持修改 UID，且全 F 的 Key A 和 Key B 便于测试。</p></details>
-      <details><summary>能复制门禁卡吗？</summary><p>取决于卡片类型和门禁系统的设计。请只对你拥有或获明确授权测试的卡片和系统操作。</p></details>
-      <details><summary>为什么 NCC 找不到读卡器？</summary><p>请检查串口位置、适配器驱动、设备是否被其他程序占用，以及当前系统账户是否拥有串口访问权限。</p></details>
-      <details><summary>推荐买什么硬件？</summary><p>PN532 + FT232RL，再配多张 CUID 测试卡，是当前已验证的入门组合。</p></details>
-      <details><summary>macOS、Linux 和 Windows 都支持吗？</summary><p>支持。NCC 面向 macOS、Windows 和 Linux 构建；具体读卡器仍以已测试的硬件配置为准。</p></details>
-      <details><summary>为什么能读 UID 但是修改不了？</summary><p>UID 所在的 block 0 默认不能写入。只有部分特殊的 Gen1/Gen2 卡，例如 CUID Magic Card 或部分复旦卡，才允许修改；普通卡不应尝试修改。</p></details>
-      <details><summary>为什么 UID 一样还是开不了门？</summary><p>系统可能不仅验证 UID，还会验证其他扇区的数据，甚至使用滚动码。因此相同 UID 并不一定具有相同的访问权限。</p></details>
-      <details><summary>什么是 Key A 和 Key B？</summary><p>它们是 卡片每个扇区使用的两把认证密钥。访问控制位决定各自可以读取或写入哪些数据；它们不是通用密码，也不应随意公开。</p></details>
-      <details><summary>Darkside 和 Nested 是什么？</summary><p>它们是针对部分兼容卡片已知弱点的密钥恢复方法。NCC 仅在你拥有或获明确授权的测试场景中提供相应工作流。</p></details>
-      <details><summary>能复制车钥匙吗？</summary><p>需要看厂商的具体设计。部分系统可能使用 NCC，但许多车钥匙采用其他无线协议、加密或滚动码；请仅处理你拥有或获授权测试的设备。</p></details>
-      <details><summary>软件会上传我的数据吗？</summary><p>不会上传卡片 UID、密钥、dump、卡片内容或个人信息。匿名遥测仅在首次启动时由你选择开启，之后可随时关闭。</p></details>
-      <details><summary>免费开源吗？</summary><p>是。NCC 源码以 MIT License 发布；随发行版提供的第三方组件按各自许可证分发。</p></details>
-      <details><summary>可以商用吗？</summary><p>NCC 自身采用 MIT License，通常允许商用。若重新分发应用或其运行时组件，请同时遵守其中第三方组件各自的许可证义务。</p></details>
-      <details><summary>可以赞助吗？</summary><p>可以。你可以通过 <a href="https://github.com/sponsors/BennyThink">GitHub Sponsors 赞助 NCC</a>。</p></details>
-    </div></section>
-    <section id="privacy" class="wrap section privacy"><p class="eyebrow">隐私</p><h2>可选遥测，不收集卡片秘密。</h2><p>匿名遥测在首次启动时由用户选择，之后可随时关闭。它只帮助了解 NCC 版本、操作系统分布与功能使用。</p><div class="no-list"><span>不收集卡片 UID</span><span>不收集密钥</span><span>不收集 dump</span><span>不收集卡片内容</span><span>不收集个人信息</span></div></section>
-    <section id="download" class="wrap download"><div><p class="eyebrow">准备好了就开始</p><h2>下载适合你平台的 NCC。</h2></div><a class="button primary" href="https://github.com/lanruowujie/NCC/releases">查看发布版本</a></section>
-  </main>
-  <footer class="wrap"><a class="brand" href="#top"><img src="../assets/images/ncc-logo.png" alt=""><span>NCC</span></a><p>仅用于你拥有或获明确授权测试的卡片和系统。</p><p><a href="https://github.com/lanruowujie/NCC">GitHub</a> · <a href="https://github.com/lanruowujie/NCC/blob/main/README.zh-CN.md">README</a> · <a href="https://github.com/lanruowujie/NCC/blob/main/LICENSE">License</a> · <a href="https://github.com/lanruowujie/NCC/blob/main/THIRD_PARTY_NOTICES.md">Notices</a></p></footer><script>document.querySelector('[data-language]').addEventListener('click',()=>{try{localStorage.setItem('ncc-website-language','en')}catch(e){}})</script>
+<header class="nav wrap"><a class="brand" href="#top"><img src="../assets/images/ncc-logo.png" alt=""><span>NNN</span></a><nav><a href="#design">设计</a><a href="#mechanism">机理</a><a href="#testing">测试用途</a><a href="#lab">虚拟实验</a><a href="../" data-language>EN</a></nav></header>
+<main id="top">
+<section class="hero wrap"><div><p class="eyebrow">NNN 安全测试工作台</p><h1>观察卡片安全行为，<em>始终保持边界。</em></h1><p class="lede">NNN 是一个跨平台 GUI，用于在受控真实环境和离线合成卡实验室中执行获得授权的 NFC/卡片读写安全测试。</p><p class="actions"><a class="button primary" href="https://github.com/lanruowujie/NNN">查看源码</a><a class="button quiet" href="https://github.com/lanruowujie/NNN/blob/master/README.zh-CN.md">阅读设计说明</a></p></div><div class="hero-mark"><img src="../assets/images/ncc-logo.png" alt="NNN 标志"><span>为有边界、可观察的测试而设计</span></div></section>
+<section id="design" class="wrap section"><p class="eyebrow">设计逻辑</p><h2>在 GUI、读卡器、工作流和证据之间建立窄边界。</h2><div class="grid cards"><article><b>01</b><h3>GUI 边界</h3><p>Wails 绑定只暴露可序列化服务和任务事件，GUI 不持有原生读卡器句柄。</p></article><article><b>02</b><h3>读卡器边界</h3><p>设备管理器串行化读卡器访问，并将其与工作台及报告逻辑隔离。</p></article><article><b>03</b><h3>写入安全</h3><p>通过预检、认证、写入顺序、卡片身份检查和回读验证保护写操作。</p></article><article><b>04</b><h3>任务可观察</h3><p>长任务发送可取消的进度、阶段、日志和结构化结果，便于复核。</p></article></div></section>
+<section id="mechanism" class="wrap section split"><div><p class="eyebrow">运行机理</p><h2>从选定读卡器到可测试结果。</h2><p>系统先采集卡片事实，再通过 Reader 抽象执行读写工作流；工作台记录已知字节、修改项、访问控制位和校验告警。恢复与审计操作作为任务运行，通过同一事件流向 GUI 报告。</p></div><div class="reader-list"><div><strong>1 · 准备</strong><p>选择经过验证的读卡器配置，并确认授权测试范围。</p></div><div><strong>2 · 操作</strong><p>对指定测试卡执行认证、读取、编辑、dump、恢复或验证。</p></div><div><strong>3 · 校验</strong><p>检查结构、卡片身份、计数器、访问控制和回读结果。</p></div><div><strong>4 · 报告</strong><p>保存进度、日志、结果和脱敏证据，用于回归分析。</p></div></div></section>
+<section id="testing" class="wrap section"><p class="eyebrow">主要用途</p><h2>授权真实环境中的读写卡攻防测试。</h2><p>NNN 面向安全团队和开发者，用于测试自己拥有或明确获准评估的卡片与门禁系统。典型目标包括认证边界、重放与旧状态处理、写入安全、恢复失败隔离和防克隆控制。它不用于未授权访问、凭证复制或绕过第三方系统。</p></section>
+<section id="lab" class="wrap section"><p class="eyebrow">离线虚拟卡实验室</p><h2>不接读卡器、不碰真实卡片也能复现机理。</h2><p>虚拟卡实验室只使用合成数据。受限审计用于展示弱密钥风险；静态克隆模拟用于展示复制 UID 和内存后仍应被动态认证与计数器检查拒绝。GUI 会显示实时进度和日志，同时禁用硬件、网络、真实 dump 和真实卡片协议。</p></section>
+<section class="wrap download"><div><p class="eyebrow">源码与文档</p><h2>查看实现和测试边界。</h2></div><a class="button primary" href="https://github.com/lanruowujie/NNN">打开 NNN</a></section>
+</main>
+<footer class="wrap"><a class="brand" href="#top"><img src="../assets/images/ncc-logo.png" alt=""><span>NNN</span></a><p>仅用于获得授权的安全测试。</p><p><a href="https://github.com/lanruowujie/NNN">GitHub</a> · <a href="https://github.com/lanruowujie/NNN/blob/master/README.zh-CN.md">README</a> · <a href="https://github.com/lanruowujie/NNN/blob/master/LICENSE">License</a></p></footer>
 </body>
 </html>

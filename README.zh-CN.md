@@ -1,191 +1,102 @@
-# NCC
+# NNN
 
-<p align="center"><img src="docs/images/ncc-logo.png" alt="NCC 标志" width="144"></p>
+NNN 是一个跨平台 GUI 工作台，主要用于**获得明确授权的 NFC/卡片读写安全测试**。它面向受控真实环境，用于验证卡片数据处理、认证边界、dump 完整性、写入安全、恢复流程和防克隆控制；同时提供完全离线的虚拟卡实验室。
 
-<p align="center"><strong>跨平台、开源、简单易用的 NCC 图形化桌面工具。</strong></p>
+> NNN 只能用于你拥有或获得明确书面授权测试的卡片、读卡器和系统。项目不用于绕过访问控制，也不用于制作未授权凭证副本。
 
-<p align="center"><a href="README.md">English</a> | <a href="README.zh-CN.md">简体中文</a></p>
+## 设计逻辑
 
-NCC 将读卡器发现、卡片信息、读取写入等功能集中到一个 macOS、Windows 与 Linux 桌面应用中，适用于你拥有或获准测试的 compatible card format 卡片。
+NNN 将系统划分为四层：
 
-NCC 坚持开源，并用清晰、直接的 GUI 让 NCC 操作不再依赖零散的命令行工具。
+```text
+Wails GUI
+  └─ 应用绑定层
+      ├─ 设备与卡片服务
+      ├─ dump 与工作台服务
+      ├─ 密钥与恢复工作流
+      └─ 任务/事件协调器
+          ├─ 进程内 libnfc 读卡路径
+          ├─ 受控外部引擎适配器
+          └─ 离线虚拟卡实验室
+```
 
-官网：[github.com/lanruowujie/NCC](https://github.com/lanruowujie/NCC) · 下载：[GitHub Releases](https://github.com/lanruowujie/NCC/releases)
+GUI 不直接接触原生读卡器对象；设备操作由设备管理器串行化。所有写入都必须经过预检、认证、写入顺序控制、逐块回读验证以及卡片身份变化检查。长任务统一建模为可取消任务，并通过 `nfcx:task` 事件向 GUI 发送进度、阶段和日志。
 
-> **NCC 项目说明：** NCC 是本项目的私有项目名称和用户界面格式标签。本项目保留现有 PN532/libnfc/compatible card format 实现，品牌改名不改变底层读卡器协议或卡片协议。
+## 运行机理
 
-# NCC 能做什么
+1. 用户选择经过验证的读卡器配置并扫描卡片。
+2. NNN 记录 UID、ATQA、SAK、卡片类型和连接状态等事实。
+3. 读写操作通过 Reader 抽象完成；原始 dump 与并列元数据分开保存。
+4. 工作台跟踪已知字节、未知字节、修改项、访问控制位和校验告警。
+5. 写入前执行容量与结构检查，写入前认证，默认保护 block 0，按安全顺序写入，并立即回读验证。
+6. 恢复或审计流程作为可取消任务运行，每个阶段向 GUI 发送进度和可读日志。
+7. 结果以结构化任务事件保留，可用于回归对比和安全测试报告。
 
-- 发现并连接 NCC 读卡器
-- 检测卡片并显示 UID、ATQA、SAK 与卡片类型。
-- 操作 兼容 1K 卡：使用 Key A/Key B 认证、读取编辑数据及写入变更。
-- 保存和加载兼容的原始 dump（`.bin` / `.mfd`）及并列元数据；恢复时执行容量、BCC、访问控制位和逐块回读检查。
-- 扫描常见密钥，并管理本地密钥目录。
-- 在已验证的 PN532 UART 读卡器上运行集成恢复流程：常见密钥、Darkside、Nested、Hardnested 与读取验证。
-- 对支持的 CUID/Gen2 和 Gen1A 卡片执行受保护的 4-byte UID/block 0 写入。
+## 主要测试用途
 
-# 支持的读卡器
+NNN 的主要用途是对获得授权的真实环境进行：
 
-| 读卡器 | 连接 / 后端 | 状态 | 平台 |
-| --- | --- | --- | --- |
-| PN532 + FT232RL | 串口，通过 libnfc `pn532_uart` | **已测试**：发现、Classic 读写、dump/restore 与密钥恢复 | macOS、Windows、Linux 构建 |
-| 其他 PN532 UART 适配器 | 串口，通过 libnfc `pn532_uart` | **预期兼容**，尚未由本项目硬件测试 | 取决于适配器驱动和串口权限 |
-| ACR122U | USB / PC/SC 或 libnfc | **当前版本不支持**：未完成 NCC 硬件验证，也未启用发布配置 | — |
-| ACR1552U | USB / 厂商 PC/SC 驱动 | **当前版本不支持**：未完成 NCC 硬件验证，也未启用发布配置 | — |
-| 其他 libnfc 设备 | 因设备而异 | 在获得明确 NCC 验证配置前均为**不支持** | — |
+- 读卡器发现、连接丢失、插拔卡和设备占用测试；
+- 已知密钥认证与访问控制行为验证；
+- 读取、编辑、dump、恢复、写入顺序和回读验证测试；
+- malformed dump、访问控制位、BCC、计数器和换卡状态处理测试；
+- 恢复工作流的可用性、取消和失败隔离测试；
+- 重放、旧状态、降级和克隆检测防御测试；
+- GUI 任务取消、进度显示和审计日志完整性测试。
 
+仓库中的 `tools/virtual_lab` 提供离线虚拟卡实验。一键审计和一键克隆检测只使用合成数据，有严格尝试上限，不连接读卡器，也不接受真实 dump。
 
-# 驱动和运行要求
+## 目录结构
 
-NCC 自带 NCC 运行时；不需要另外安装 libnfc、mfoc、mfcuk 或命令行 NCC 工具。
+| 路径 | 作用 |
+| --- | --- |
+| `app/` | Wails 绑定、应用服务、任务 DTO 和 GUI 工作流 |
+| `frontend/` | Vanilla TypeScript GUI 与实时任务事件展示 |
+| `internal/nfc/` | Reader 抽象、mock reader 和 libnfc 边界 |
+| `internal/workflow/` | 读取、写入、dump、恢复、密钥和恢复工作流 |
+| `internal/attack/` | 受控外部引擎接口与进程管理 |
+| `tools/virtual_lab/` | 离线虚拟卡审计和防克隆实验 |
+| `docs/` | 架构、规格、实施记录和发布材料 |
+| `testdata/` | 脱敏测试夹具 |
 
-- Linux：当前账户通常需要获得串口读写权限（常见为 `dialout` 组）。例如：`sudo usermod -aG dialout $USER`；重新登录后生效。也可以在明确了解风险的前提下，以 `sudo` 运行。
-- macOS：未签名版本可能显示 Gatekeeper 警告；可在“系统设置 → 隐私与安全性”中按提示允许打开。
-- Windows：启动 NCC 可能需要先安装请安装 [FTDI 虚拟串口驱动](https://ftdichip.com/drivers/)
+## GUI 工作流
 
-# 下载和安装
+主窗口展示读卡器状态、卡片信息、扇区/block 工作台、密钥状态、任务进度、活动日志和受保护写入动作。**虚拟卡实验室**与真实读卡路径分离，提供：
 
-1. 打开 [GitHub Releases](https://github.com/lanruowujie/NCC/releases)。
-2. 下载适合你操作系统的安装包或压缩包。
-3. 安装或解压；必要时安装读卡器驱动。
-4. 连接读卡器并启动 NCC。
+- **一键受限审计**：仅针对合成虚拟卡演示弱密钥审计；
+- **一键克隆检测**：仅在内存中复制合成静态快照，演示动态认证和计数器如何拒绝静态副本。
 
-# 快速开始
+真实授权工作流和虚拟实验都使用同一任务栏展示阶段进度，并支持取消。
 
-1. 连接 NCC 读卡器并启动 NCC。
-2. 刷新读卡器列表，或输入 PN532 UART connstring。
-3. 将获授权卡片放在读卡器上，选择 **Scan Card**。
-4. 查看卡片信息，按需使用对应功能。
+## 构建与验证
 
-备注：PN532的UART/HSU模式示意图
-![uart.jpeg](docs/images/uart.jpeg)
+本项目采用 Wails v2、Go、Vanilla TypeScript 和平台相关的 libnfc 工具链。开发环境应提供 Go 1.25.1、Wails v2、Node.js、前端依赖以及对应平台工具链。
 
+```bash
+# 不需要硬件的虚拟实验
+python3 -m unittest -v tools/virtual_lab/test_virtual_card_lab.py
+python3 tools/virtual_lab/virtual_card_lab.py --demo
 
-# 常见问题
+# 已安装 Go/Wails 的完整项目
+wails generate module
+go test ./...
+cd frontend && npm run build
+```
 
-<details><summary>还需要读卡器吗？</summary>
+真实硬件测试必须显式启用，并且只能使用指定测试卡和测试系统；普通离线测试不得自动执行真实硬件操作。
 
-需要。NCC 通过兼容的外接读卡器与实体 NCC 卡通信。
-</details>
+## 数据与隐私
 
-<details><summary>支持什么设备？</summary>
+虚拟卡实验不会上传卡片 UID、密钥、dump 或卡片内容。启用可选匿名遥测前请先检查设置。不要将真实卡片数据、生产密钥或客户信息提交到本公开仓库。
 
-已测试的组合是 PN532 + FT232RL。其他串口适配器理论上也可使用，但建议选用 FT232RL。请将 PN532 调至 UART/HSU 模式，并交叉连接数据线（PN532 RX 接串口 TX）。建议焊接连接，避免杜邦线接触不良。
-</details>
+## 许可证与第三方声明
 
-<details><summary>能把门禁卡写入 iPhone 吗？</summary>
+NNN 源码采用 MIT License。运行时组件和外部工具可能适用其他许可证，重新分发前请阅读 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
-NCC 可以操作实体门禁卡，但 iPhone 中的卡不像普通白卡一样可任意写入。可考虑购买 NCC 卡贴，写入后贴在手机背面使用。
-</details>
+## 负责任使用
 
-<details><summary>建议买什么卡片？</summary>
+NNN 是安全测试工作台，不是授权绕过工具。测试前应确定书面范围，使用隔离夹具或指定测试卡，保存证据时脱敏秘密；一旦测试超出批准范围，应立即停止。
 
-建议准备 CUID 卡用于已获授权的测试；它通常支持修改 UID，且全 F 的 Key A 和 Key B 便于测试。
-</details>
-
-<details><summary>能复制门禁卡吗？</summary>
-
-取决于卡片类型和门禁系统的设计。请只对你拥有或获明确授权测试的卡片和系统操作。
-</details>
-
-<details><summary>为什么 NCC 找不到读卡器？</summary>
-
-请检查串口位置、适配器驱动、设备是否被其他程序占用，以及当前系统账户是否拥有串口访问权限。
-</details>
-
-<details><summary>推荐买什么硬件？</summary>
-
-PN532 + FT232RL，再配多张 CUID 测试卡，是当前已验证的入门组合。
-</details>
-
-<details><summary>macOS、Linux 和 Windows 都支持吗？</summary>
-
-支持。NCC 面向 macOS、Windows 和 Linux 构建；具体读卡器仍以已测试的硬件配置为准。
-</details>
-
-<details><summary>为什么能读 UID 但是修改不了？</summary>
-
-UID 所在的 block 0 默认不能写入。只有部分特殊的 Gen1/Gen2 卡，例如 CUID Magic Card 或部分复旦卡，才允许修改；普通卡不应尝试修改。
-</details>
-
-<details><summary>为什么 UID 一样还是开不了门？</summary>
-
-系统可能不仅验证 UID，还会验证其他扇区的数据，甚至使用滚动码。因此相同 UID 并不一定具有相同的访问权限。
-</details>
-
-<details><summary>什么是 Key A 和 Key B？</summary>
-
-它们是 compatible card format 每个扇区使用的两把认证密钥。访问控制位决定各自可以读取或写入哪些数据；它们不是通用密码，也不应随意公开。
-</details>
-
-<details><summary>Darkside 和 Nested 是什么？</summary>
-
-它们是针对部分 compatible card format 卡片已知弱点的密钥恢复方法。NCC 仅在你拥有或获明确授权的测试场景中提供相应工作流。
-</details>
-
-<details><summary>能复制车钥匙吗？</summary>
-
-需要看厂商的具体设计。部分系统可能使用 NCC，但许多车钥匙采用其他无线协议、加密或滚动码；请仅处理你拥有或获授权测试的设备。
-</details>
-
-<details><summary>软件会上传我的数据吗？</summary>
-
-不会上传卡片 UID、密钥、dump、卡片内容或个人信息。匿名遥测仅在首次启动时由你选择开启，之后可随时关闭。
-</details>
-
-<details><summary>免费开源吗？</summary>
-
-是。NCC 源码以 MIT License 发布；随发行版提供的第三方组件按各自许可证分发。
-</details>
-
-<details><summary>可以商用吗？</summary>
-
-NCC 自身采用 MIT License，通常允许商用。若重新分发应用或其运行时组件，请同时遵守其中第三方组件各自的许可证义务。
-</details>
-
-<details><summary>可以赞助吗？</summary>
-
-可以。你可以通过 [GitHub Sponsors 赞助 NCC](https://github.com/sponsors/BennyThink)。
-</details>
-
-
-# 软件截图
-
-## 主界面
-
-![NCC 主界面](docs/images/main.jpg)
-
-## 密钥管理
-
-![NCC 密钥管理](docs/images/key-lib.jpg)
-
-可以加载任意密钥库，提高解密成功率
-
-# 隐私和匿名遥测
-
-匿名遥测完全可选。首次启动时可以选择是否启用，之后也能随时在 **关于** 中更改。
-启用后，NCC 只发送匿名安装标识、NCC 版本、粗粒度操作系统类型、白名单功能事件和事件时间，用于了解功能使用情况与平台分布。
-
-NCC **不会**采集卡片 UID、Key A/Key B、dump、卡片内容、读卡器标识、用户名、设备名、Machine ID、文件路径、日志、IP 地址或其他个人信息。
-收集端不会保留原始请求头或 IP 数据。实现细节见[遥测规格](docs/specs/14-telemetry.md)。
-
-# 许可证与第三方软件
-
-NCC 源码使用 [MIT License](LICENSE)。
-NCC 会动态链接 LGPL-3.0-or-later 的 libnfc，并重新分发独立的 GPL-2.0-or-later 密钥恢复可执行文件（mfoc、mfcuk、mfoc-hardnested），以及 BSD-2-Clause 的 `nfc-mfsetuid` 工具。
-这些均为独立许可的软件；发布包包含其 notice、源码位置、固定版本与 NCC 补丁。
-
-重新分发 NCC 或其运行时前，请阅读 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-
-# 项目链接
-
-- [项目主页](https://github.com/lanruowujie/NCC)
-- [GitHub 仓库](https://github.com/lanruowujie/NCC)
-- [下载发布版](https://github.com/lanruowujie/NCC/releases)
-- [赞助 NCC](https://github.com/sponsors/BennyThink)
+- [English README](README.md)
 - [文档索引](docs/README.md)
-
-**请仅将 NCC 用于你拥有或获得明确授权测试的卡片和系统。**
-
-# LICENSE
-MIT
+- [公开仓库](https://github.com/lanruowujie/NNN)
