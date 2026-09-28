@@ -22,6 +22,14 @@ func (b *Bindings) RunVirtualLabClone() VirtualLabResultDTO {
 	return b.service.RunVirtualLabClone()
 }
 
+func (b *Bindings) StartVirtualLabAudit() (TaskDTO, error) {
+	return b.service.StartVirtualLabAudit()
+}
+
+func (b *Bindings) StartVirtualLabClone() (TaskDTO, error) {
+	return b.service.StartVirtualLabClone()
+}
+
 func (b *Bindings) GetDiagnostics() diagnostic.Report { return b.service.Diagnostics() }
 
 func (b *Bindings) OpenCommandTerminal() error { return b.service.OpenCommandTerminal() }

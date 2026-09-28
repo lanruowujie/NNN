@@ -216,6 +216,7 @@ type TaskEventDetailDTO struct {
 	Indeterminate bool                  `json:"indeterminate,omitempty"`
 	Recovery      *KeyRecoveryResultDTO `json:"recovery,omitempty"`
 	UID           *UIDWriteResultDTO    `json:"uid,omitempty"`
+	VirtualLab    *VirtualLabResultDTO  `json:"virtualLab,omitempty"`
 }
 
 type KeyRecoveryStartRequestDTO struct {
