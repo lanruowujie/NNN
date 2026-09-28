@@ -39,6 +39,10 @@ go.work.sum
 /.idea/vcs.xml
 /scripts/*.bin
 
+# Python test/runtime caches
+__pycache__/
+*.py[cod]
+
 # Wails and frontend build outputs
 /build/bin/
 /build/toolchain/
