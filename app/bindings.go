@@ -14,6 +14,14 @@ func (b *Bindings) GetDashboard() DashboardDTO {
 	return b.service.Dashboard()
 }
 
+func (b *Bindings) RunVirtualLabAudit() VirtualLabResultDTO {
+	return b.service.RunVirtualLabAudit()
+}
+
+func (b *Bindings) RunVirtualLabClone() VirtualLabResultDTO {
+	return b.service.RunVirtualLabClone()
+}
+
 func (b *Bindings) GetDiagnostics() diagnostic.Report { return b.service.Diagnostics() }
 
 func (b *Bindings) OpenCommandTerminal() error { return b.service.OpenCommandTerminal() }
